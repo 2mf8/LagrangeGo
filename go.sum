@@ -1,3 +1,5 @@
+github.com/LagrangeDev/LagrangeGo v0.0.0-20240510001532-fe45f8db2afc h1:uj3MFo57cXnhKHWwgPCTLj4i+EZd7irhF8XVLjevchM=
+github.com/LagrangeDev/LagrangeGo v0.0.0-20240510001532-fe45f8db2afc/go.mod h1:ocauqumFhF3fbhbQWV6xX1sf/Effqlut2bIp0GOfzkQ=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d h1:/Xuj3fIiMY2ls1TwvPKmaqQrtJsPY+c9s+0lOScVHd8=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d/go.mod h1:2Ie+hdBFQpQFDHfeklgxoFmQRCE7O+KwFpISeXq7OwA=
 github.com/RomiChan/syncx v0.0.0-20240418144900-b7402ffdebc7 h1:S/ferNiehVjNaBMNNBxUjLtVmP/YWD6Yh79RfPv4ehU=
@@ -21,11 +23,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
-github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
-github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 golang.org/x/image v0.16.0 h1:9kloLAKhUufZhA12l5fwnx2NZW39/we1UhBesW433jw=
 golang.org/x/image v0.16.0/go.mod h1:ugSZItdV4nOxyqp56HmXwH0Ry0nBCpjnZdpDaIHdoPs=
 golang.org/x/net v0.25.0 h1:d/OCCoBEUq33pjydKrGQhw7IlUPI2Oylr+8qLx49kac=

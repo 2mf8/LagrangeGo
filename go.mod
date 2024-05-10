@@ -1,8 +1,9 @@
-module github.com/LagrangeDev/LagrangeGo
+module github.com/2mf8/LagrangeGo
 
 go 1.20
 
 require (
+	github.com/LagrangeDev/LagrangeGo v0.0.0-20240510001532-fe45f8db2afc
 	github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d
 	github.com/RomiChan/syncx v0.0.0-20240418144900-b7402ffdebc7
 	github.com/fumiama/gofastTEA v0.0.10
@@ -16,8 +17,8 @@ require (
 
 require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
 	golang.org/x/image v0.16.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
