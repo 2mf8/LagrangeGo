@@ -1,8 +1,9 @@
-module github.com/LagrangeDev/LagrangeGo
+module github.com/2mf8/LagrangeGo
 
 go 1.20
 
 require (
+	github.com/LagrangeDev/LagrangeGo v0.0.0-20240511111950-661396054d3f
 	github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d
 	github.com/RomiChan/syncx v0.0.0-20240418144900-b7402ffdebc7
 	github.com/fumiama/gofastTEA v0.0.10

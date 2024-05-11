@@ -9,7 +9,7 @@ import (
 	"github.com/LagrangeDev/LagrangeGo/utils"
 
 	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/internal/proto"
 )
 
 var messageLogger = utils.GetLogger("message")

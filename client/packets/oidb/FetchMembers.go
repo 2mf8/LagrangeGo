@@ -3,7 +3,7 @@ package oidb
 import (
 	"github.com/LagrangeDev/LagrangeGo/client/entity"
 	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/internal/proto"
 	"github.com/LagrangeDev/LagrangeGo/utils"
 )
 

@@ -5,12 +5,12 @@ import (
 	"encoding/hex"
 	"errors"
 
-	highway2 "github.com/LagrangeDev/LagrangeGo/client/internal/highway"
+	highway2 "github.com/2mf8/LagrangeGo/client/internal/highway"
 	"github.com/LagrangeDev/LagrangeGo/client/packets/oidb"
 	message2 "github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
 	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/highway"
 	oidb2 "github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/internal/proto"
 	"github.com/LagrangeDev/LagrangeGo/message"
 	"github.com/LagrangeDev/LagrangeGo/utils/binary"
 )

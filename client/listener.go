@@ -7,7 +7,7 @@ import (
 	"github.com/RomiChan/protobuf/proto"
 
 	eventConverter "github.com/LagrangeDev/LagrangeGo/client/event"
-	"github.com/LagrangeDev/LagrangeGo/client/internal/network"
+	"github.com/2mf8/LagrangeGo/client/internal/network"
 	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
 	msgConverter "github.com/LagrangeDev/LagrangeGo/message"
 	"github.com/LagrangeDev/LagrangeGo/utils"

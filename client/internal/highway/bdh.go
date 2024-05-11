@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/highway"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/internal/proto"
 	"github.com/LagrangeDev/LagrangeGo/utils/binary"
 )
 
