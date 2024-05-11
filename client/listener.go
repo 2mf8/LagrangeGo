@@ -6,12 +6,12 @@ import (
 
 	"github.com/RomiChan/protobuf/proto"
 
-	eventConverter "github.com/LagrangeDev/LagrangeGo/client/event"
+	eventConverter "github.com/2mf8/LagrangeGo/client/event"
 	"github.com/2mf8/LagrangeGo/client/internal/network"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
-	msgConverter "github.com/LagrangeDev/LagrangeGo/message"
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/message"
+	msgConverter "github.com/2mf8/LagrangeGo/message"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/binary"
 )
 
 // decoders https://github.com/Mrs4s/MiraiGo/blob/54bdd873e3fed9fe1c944918924674dacec5ac76/client/client.go#L150

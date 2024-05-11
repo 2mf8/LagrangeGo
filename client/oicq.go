@@ -3,12 +3,12 @@ package client
 import (
 	"fmt"
 
-	"github.com/LagrangeDev/LagrangeGo/client/auth"
+	"github.com/2mf8/LagrangeGo/client/auth"
 	"github.com/2mf8/LagrangeGo/client/internal/oicq"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb"
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/client/packets/pb"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
 	"github.com/RomiChan/protobuf/proto"
 	tea "github.com/fumiama/gofastTEA"
 )

@@ -11,16 +11,16 @@ import (
 
 	"github.com/RomiChan/syncx"
 
-	"github.com/LagrangeDev/LagrangeGo/client/auth"
-	"github.com/LagrangeDev/LagrangeGo/client/event"
+	"github.com/2mf8/LagrangeGo/client/auth"
+	"github.com/2mf8/LagrangeGo/client/event"
 	"github.com/2mf8/LagrangeGo/client/internal/cache"
 	"github.com/2mf8/LagrangeGo/client/internal/highway"
 	"github.com/2mf8/LagrangeGo/client/internal/network"
 	"github.com/2mf8/LagrangeGo/client/internal/oicq"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/oidb"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/wtlogin"
-	"github.com/LagrangeDev/LagrangeGo/client/sign"
-	"github.com/LagrangeDev/LagrangeGo/message"
+	"github.com/2mf8/LagrangeGo/client/packets/oidb"
+	"github.com/2mf8/LagrangeGo/client/packets/wtlogin"
+	"github.com/2mf8/LagrangeGo/client/sign"
+	"github.com/2mf8/LagrangeGo/message"
 )
 
 // NewClient 创建一个新的 QQ Client

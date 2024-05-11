@@ -6,9 +6,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/message"
 	"github.com/2mf8/LagrangeGo/internal/proto"
 )
 

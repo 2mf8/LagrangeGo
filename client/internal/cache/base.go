@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/LagrangeDev/LagrangeGo/client/entity"
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/client/entity"
+	"github.com/2mf8/LagrangeGo/utils"
 	"github.com/RomiChan/syncx"
 )
 

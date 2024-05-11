@@ -1,11 +1,11 @@
 package client
 
 import (
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/action"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
-	message2 "github.com/LagrangeDev/LagrangeGo/message"
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/action"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/message"
+	message2 "github.com/2mf8/LagrangeGo/message"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
 	"github.com/RomiChan/protobuf/proto"
 )
 

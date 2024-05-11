@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"unsafe"
 
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 type Reader struct {

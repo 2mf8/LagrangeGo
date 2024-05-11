@@ -3,8 +3,8 @@ package message
 // from https://github.com/Mrs4s/MiraiGo/blob/master/message/image.go
 
 import (
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/message"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
 )
 
 type GroupImageElement struct {

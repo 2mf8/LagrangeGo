@@ -5,8 +5,8 @@ import (
 	"encoding/gob"
 	"errors"
 
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
 )
 
 var (

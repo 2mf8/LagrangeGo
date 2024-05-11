@@ -1,7 +1,5 @@
 github.com/FloatTech/ttl v0.0.0-20230307105452-d6f7b2b647d1 h1:g4pTnDJUW4VbJ9NvoRfUvdjDrHz/6QhfN/LoIIpICbo=
 github.com/FloatTech/ttl v0.0.0-20230307105452-d6f7b2b647d1/go.mod h1:fHZFWGquNXuHttu9dUYoKuNbm3dzLETnIOnm1muSfDs=
-github.com/LagrangeDev/LagrangeGo v0.0.0-20240511111950-661396054d3f h1:x1j0Ig6choxXjbIxpgXZFG/RSuatun+fvUCrrmI3Iws=
-github.com/LagrangeDev/LagrangeGo v0.0.0-20240511111950-661396054d3f/go.mod h1:bXBGpyljx81ux9ItumiMB67xJGGpe2Sb5CTUFFeTR+Y=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d h1:/Xuj3fIiMY2ls1TwvPKmaqQrtJsPY+c9s+0lOScVHd8=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d/go.mod h1:2Ie+hdBFQpQFDHfeklgxoFmQRCE7O+KwFpISeXq7OwA=
 github.com/RomiChan/syncx v0.0.0-20240418144900-b7402ffdebc7 h1:S/ferNiehVjNaBMNNBxUjLtVmP/YWD6Yh79RfPv4ehU=

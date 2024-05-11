@@ -2,7 +2,7 @@ package tlv
 
 import (
 	"github.com/2mf8/LagrangeGo/internal/proto"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/utils/binary"
 )
 
 func T11(unusualSign []byte) []byte {

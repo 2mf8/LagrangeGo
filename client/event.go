@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 var eventLogger = utils.GetLogger("event")

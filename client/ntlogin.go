@@ -5,12 +5,12 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/LagrangeDev/LagrangeGo/client/auth"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/login"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/wtlogin/loginState"
+	"github.com/2mf8/LagrangeGo/client/auth"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/login"
+	"github.com/2mf8/LagrangeGo/client/packets/wtlogin/loginState"
 	"github.com/2mf8/LagrangeGo/internal/proto"
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
 )
 
 var loginLogger = utils.GetLogger("login")

@@ -5,7 +5,7 @@ package client
 import (
 	"errors"
 
-	"github.com/LagrangeDev/LagrangeGo/message"
+	"github.com/2mf8/LagrangeGo/message"
 )
 
 var (

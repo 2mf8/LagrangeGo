@@ -10,7 +10,7 @@ import (
 
 	"github.com/2mf8/LagrangeGo/client/internal/network"
 	"github.com/2mf8/LagrangeGo/client/internal/oicq"
-	"github.com/LagrangeDev/LagrangeGo/message"
+	"github.com/2mf8/LagrangeGo/message"
 	"github.com/pkg/errors"
 )
 

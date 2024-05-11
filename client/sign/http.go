@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/LagrangeDev/LagrangeGo/client/http2"
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/client/http2"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 var (

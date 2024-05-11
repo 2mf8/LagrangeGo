@@ -13,9 +13,9 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/highway"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/highway"
 	"github.com/2mf8/LagrangeGo/internal/proto"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/utils/binary"
 )
 
 const BlockSize = 256 * 1024

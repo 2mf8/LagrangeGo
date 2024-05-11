@@ -4,7 +4,7 @@
 package message
 
 import (
-	system "github.com/LagrangeDev/LagrangeGo/client/packets/pb/system"
+	system "github.com/2mf8/LagrangeGo/client/packets/pb/system"
 	proto "github.com/RomiChan/protobuf/proto"
 )
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/2mf8/LagrangeGo/internal/proto"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/action"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/action"
 )
 
 func BuildHighWayUrlReq(tgt []byte) ([]byte, error) {

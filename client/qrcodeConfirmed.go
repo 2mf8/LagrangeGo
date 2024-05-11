@@ -1,9 +1,9 @@
 package client
 
 import (
-	"github.com/LagrangeDev/LagrangeGo/client/packets/tlv"
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/client/packets/tlv"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/binary"
 )
 
 func (c *QQClient) QRCodeConfirmed() error {

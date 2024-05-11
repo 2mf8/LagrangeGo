@@ -5,10 +5,10 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/LagrangeDev/LagrangeGo/client/auth"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/system"
+	"github.com/2mf8/LagrangeGo/client/auth"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/system"
 	"github.com/2mf8/LagrangeGo/internal/proto"
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 // BuildRegisterRequest trpc.qq_new_tech.status_svc.StatusService.Register

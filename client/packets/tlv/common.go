@@ -5,10 +5,10 @@ import (
 
 	ftea "github.com/fumiama/gofastTEA"
 
-	"github.com/LagrangeDev/LagrangeGo/client/auth"
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/client/auth"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
 )
 
 // T18 默认参数 pingVersion, unknown = 0, ssoVersion = 5
