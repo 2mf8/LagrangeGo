@@ -96,7 +96,7 @@ func (c *QQClient) Login(password, qrcodePath string) error {
 	return c.init()
 }
 
-func (c *QQClient) SessionLogin(password, qrcodePath string) error {
+func (c *QQClient) SessionLogin() error {
 	// prefer session login
 	loginLogger.Infoln("Session found, try to login with session")
 	c.Uin = c.transport.Sig.Uin
