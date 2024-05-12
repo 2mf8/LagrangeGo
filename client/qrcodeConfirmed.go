@@ -32,7 +32,6 @@ func (c *QQClient) QRCodeConfirmed() error {
 			).ToBytes()))
 
 	if err != nil {
-		networkLogger.Error(err)
 		return err
 	}
 
