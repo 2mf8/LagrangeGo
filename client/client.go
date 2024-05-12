@@ -96,6 +96,26 @@ func (c *QQClient) Login(password, qrcodePath string) error {
 	return c.init()
 }
 
+func (c *QQClient) SessionLogin(password, qrcodePath string) error {
+	// prefer session login
+	loginLogger.Infoln("Session found, try to login with session")
+	c.Uin = c.transport.Sig.Uin
+	if c.Online.Load() {
+		return ErrAlreadyOnline
+	}
+	err := c.connect()
+	if err != nil {
+		return err
+	}
+	err = c.init()
+	if err != nil {
+		err = fmt.Errorf("failed to register session: %v", err)
+		loginLogger.Errorln(err)
+		return err
+	}
+	return nil
+}
+
 func (c *QQClient) TokenLogin() (loginState.State, error) {
 	if c.Online.Load() {
 		return -996, ErrAlreadyOnline
