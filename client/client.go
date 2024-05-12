@@ -334,3 +334,25 @@ func (c *QQClient) init() error {
 	networkLogger.Info("Register succeeded")
 	return nil
 }
+
+func (c *QQClient) Init() error {
+	response, err := c.sendUniPacketAndWait(
+		"trpc.qq_new_tech.status_svc.StatusService.Register",
+		wtlogin.BuildRegisterRequest(c.version(), c.Device()))
+
+	if err != nil {
+		networkLogger.Errorln(err)
+		return err
+	}
+
+	err = wtlogin.ParseRegisterResponse(response)
+	if err != nil {
+		networkLogger.Errorln("Register failed:", err)
+		return err
+	}
+	c.transport.Sig.Uin = c.Uin
+	c.setOnline()
+	go c.doHeartbeat()
+	networkLogger.Info("Register succeeded")
+	return nil
+}
