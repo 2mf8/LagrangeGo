@@ -1,6 +1,8 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/2mf8/LagrangeGo/client/packets/tlv"
 	"github.com/2mf8/LagrangeGo/utils"
 	"github.com/2mf8/LagrangeGo/utils/binary"
@@ -36,4 +38,24 @@ func (c *QQClient) QRCodeConfirmed() error {
 	}
 
 	return c.decodeLoginResponse(response, &c.transport.Sig)
+}
+
+func (c *QQClient) SessionLogin() error {
+	// prefer session login
+	c.infoln("Session found, try to login with session")
+	c.Uin = c.transport.Sig.Uin
+	if c.Online.Load() {
+		return ErrAlreadyOnline
+	}
+	err := c.connect()
+	if err != nil {
+		return err
+	}
+	err = c.Register()
+	if err != nil {
+		err = fmt.Errorf("failed to register session: %v", err)
+		c.errorln(err)
+		return err
+	}
+	return nil
 }

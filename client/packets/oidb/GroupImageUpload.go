@@ -3,19 +3,21 @@ package oidb
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"math/rand"
+
+	"github.com/2mf8/LagrangeGo/message"
 
 	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
 	"github.com/2mf8/LagrangeGo/utils"
-	"github.com/2mf8/LagrangeGo/utils/crypto"
 )
 
-func BuildGroupImageUploadReq(groupUin uint32, data []byte) (*OidbPacket, error) {
+func BuildGroupImageUploadReq(groupUin uint32, image *message.ImageElement) (*OidbPacket, error) {
 	// OidbSvcTrpcTcp.0x11c4_100
-	md5Hash := crypto.MD5Digest(data)
-	sha1Hash := crypto.SHA1Digest(data)
-	format, size, err := utils.ImageResolve(data)
+	if image.Stream == nil {
+		return nil, errors.New("image data is null")
+	}
+
+	format, size, err := utils.ImageResolve(image.Stream)
 	if err != nil {
 		return nil, err
 	}
@@ -49,10 +51,10 @@ func BuildGroupImageUploadReq(groupUin uint32, data []byte) (*OidbPacket, error)
 			UploadInfo: []*oidb.UploadInfo{
 				{
 					FileInfo: &oidb.FileInfo{
-						FileSize: uint32(len(data)),
-						FileHash: fmt.Sprintf("%x", md5Hash),
-						FileSha1: fmt.Sprintf("%x", sha1Hash),
-						FileName: fmt.Sprintf("%x.%s", md5Hash, imageExt),
+						FileSize: image.Size,
+						FileHash: hex.EncodeToString(image.Md5),
+						FileSha1: hex.EncodeToString(image.Sha1),
+						FileName: hex.EncodeToString(image.Md5) + "." + imageExt,
 						Type: &oidb.FileType{
 							Type:        1,
 							PicFormat:   uint32(format),
@@ -74,6 +76,7 @@ func BuildGroupImageUploadReq(groupUin uint32, data []byte) (*OidbPacket, error)
 			ExtBizInfo: &oidb.ExtBizInfo{
 				Pic: &oidb.PicExtBizInfo{
 					BytesPbReserveTroop: bytesPbReserveTroop,
+					TextSummary:         image.Summary,
 				},
 				Video: &oidb.VideoExtBizInfo{
 					BytesPbReserve: []byte{},
@@ -92,14 +95,5 @@ func BuildGroupImageUploadReq(groupUin uint32, data []byte) (*OidbPacket, error)
 }
 
 func ParseGroupImageUploadResp(data []byte) (*oidb.NTV2RichMediaResp, error) { // TODO: return proper response
-	var resp oidb.NTV2RichMediaResp
-	baseResp, err := ParseOidbPacket(data, &resp)
-	if err != nil {
-		return nil, err
-	}
-	if baseResp.ErrorCode != 0 {
-		return nil, errors.New(baseResp.ErrorMsg)
-	}
-
-	return &resp, nil
+	return ParseTypedError[oidb.NTV2RichMediaResp](data)
 }

@@ -25,6 +25,36 @@ type Builder struct {
 	io.ReaderFrom
 }
 
+// NewWriterF from https://github.com/Mrs4s/MiraiGo/blob/master/binary/writer.go
+func NewWriterF(f func(writer *Builder)) []byte {
+	w := SelectBuilder(nil)
+	f(w)
+	b := make([]byte, w.Len())
+	copy(b, w.ToBytes())
+	w.put()
+	return b
+}
+
+// OpenWriterF must call func cl to close from https://github.com/Mrs4s/MiraiGo/blob/master/binary/writer.go
+func OpenWriterF(f func(builder *Builder)) (b []byte, cl func()) {
+	w := SelectBuilder(nil)
+	f(w)
+	return w.ToBytes(), w.put
+}
+
+// ToBytes from https://github.com/Mrs4s/MiraiGo/blob/master/binary/writer.go
+func ToBytes(i any) []byte {
+	return NewWriterF(func(w *Builder) {
+		// TODO: more types
+		switch t := i.(type) {
+		case int16:
+			w.WriteU16(uint16(t))
+		case int32:
+			w.WriteU32(uint32(t))
+		}
+	})
+}
+
 // NewBuilder with finalizer of itself.
 //
 // Be sure to use all data before builder is GCed.
@@ -56,6 +86,11 @@ func (b *Builder) Len() int {
 
 // ToReader GC 不安全, 确保在 Builder 被回收前使用
 func (b *Builder) ToReader() io.Reader {
+	return &b.buffer
+}
+
+// Buffer GC 不安全, 确保在 Builder 被回收前使用
+func (b *Builder) Buffer() *bytes.Buffer {
 	return &b.buffer
 }
 

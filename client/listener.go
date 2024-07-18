@@ -2,9 +2,10 @@ package client
 
 import (
 	"errors"
+	"reflect"
 	"runtime/debug"
 
-	"github.com/RomiChan/protobuf/proto"
+	"github.com/2mf8/LagrangeGo/internal/proto"
 
 	eventConverter "github.com/2mf8/LagrangeGo/client/event"
 	"github.com/2mf8/LagrangeGo/client/internal/network"
@@ -37,16 +38,32 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 	if pkg.Body == nil {
 		return nil, errors.New("message body is empty")
 	}
-
 	switch typ {
-	case 166: // private msg
-		c.PrivateMessageEvent.dispatch(c, msgConverter.ParsePrivateMessage(&msg))
+	case 166, 208: // 166 for private msg, 208 for private record
+		prvMsg := msgConverter.ParsePrivateMessage(&msg)
+		_ = c.PreprocessPrivateMessageEvent(prvMsg)
+		if prvMsg.Sender.Uin != c.Uin {
+			c.PrivateMessageEvent.dispatch(c, prvMsg)
+		} else {
+			c.SelfPrivateMessageEvent.dispatch(c, prvMsg)
+		}
 		return nil, nil
 	case 82: // group msg
-		c.GroupMessageEvent.dispatch(c, msgConverter.ParseGroupMessage(&msg))
+		grpMsg := msgConverter.ParseGroupMessage(&msg)
+		_ = c.PreprocessGroupMessageEvent(grpMsg)
+		if grpMsg.Sender.Uin != c.Uin {
+			c.GroupMessageEvent.dispatch(c, grpMsg)
+		} else {
+			c.SelfGroupMessageEvent.dispatch(c, grpMsg)
+		}
 		return nil, nil
 	case 141: // temp msg
-		c.TempMessageEvent.dispatch(c, msgConverter.ParseTempMessage(&msg))
+		tempMsg := msgConverter.ParseTempMessage(&msg)
+		if tempMsg.Sender.Uin != c.Uin {
+			c.TempMessageEvent.dispatch(c, tempMsg)
+		} else {
+			c.SelfTempMessageEvent.dispatch(c, tempMsg)
+		}
 		return nil, nil
 	case 33: // member increase
 		pb := message.GroupChange{}
@@ -54,7 +71,9 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.GroupMemberJoinEvent.dispatch(c, eventConverter.ParseMemberIncreaseEvent(&pb))
+		ev := eventConverter.ParseMemberIncreaseEvent(&pb)
+		_ = c.PreprocessOther(ev)
+		c.GroupMemberJoinEvent.dispatch(c, ev)
 		return nil, nil
 	case 34: // member decrease
 		pb := message.GroupChange{}
@@ -71,7 +90,9 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 			}
 			pb.Operator = utils.S2B(Operator.OperatorField1.OperatorUid)
 		}
-		c.GroupMemberLeaveEvent.dispatch(c, eventConverter.ParseMemberDecreaseEvent(&pb))
+		ev := eventConverter.ParseMemberDecreaseEvent(&pb)
+		_ = c.PreprocessOther(ev)
+		c.GroupMemberLeaveEvent.dispatch(c, ev)
 		return nil, nil
 	case 84: // group request join notice
 		pb := message.GroupJoin{}
@@ -79,7 +100,9 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.GroupMemberJoinRequestEvent.dispatch(c, eventConverter.ParseRequestJoinNotice(&pb))
+		ev := eventConverter.ParseRequestJoinNotice(&pb)
+		_ = c.PreprocessOther(ev)
+		c.GroupMemberJoinRequestEvent.dispatch(c, ev)
 		return nil, nil
 	case 525: // group request invitation notice
 		pb := message.GroupInvitation{}
@@ -87,7 +110,9 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.GroupMemberJoinRequestEvent.dispatch(c, eventConverter.ParseRequestInvitationNotice(&pb))
+		ev := eventConverter.ParseRequestInvitationNotice(&pb)
+		_ = c.PreprocessOther(ev)
+		c.GroupMemberJoinRequestEvent.dispatch(c, ev)
 		return nil, nil
 	case 87: // group invite notice
 		pb := message.GroupInvite{}
@@ -95,7 +120,9 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.GroupInvitedEvent.dispatch(c, eventConverter.ParseInviteNotice(&pb))
+		ev := eventConverter.ParseInviteNotice(&pb)
+		_ = c.PreprocessOther(ev)
+		c.GroupInvitedEvent.dispatch(c, ev)
 		return nil, nil
 	case 0x210: // friend event, 528
 		subType := pkg.ContentHead.SubType.Unwrap()
@@ -106,7 +133,7 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 			if err != nil {
 				return nil, err
 			}
-			c.FriendRequestEvent.dispatch(c, eventConverter.ParseFriendRequestNotice(&pb, &msg))
+			c.NewFriendRequestEvent.dispatch(c, eventConverter.ParseFriendRequestNotice(&pb, &msg))
 			return nil, nil
 		case 138: // friend recall
 			pb := message.FriendRecall{}
@@ -114,7 +141,9 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 			if err != nil {
 				return nil, err
 			}
-			c.FriendRecallEvent.dispatch(c, eventConverter.ParseFriendRecallEvent(&pb))
+			ev := eventConverter.ParseFriendRecallEvent(&pb)
+			_ = c.PreprocessOther(ev)
+			c.FriendRecallEvent.dispatch(c, ev)
 			return nil, nil
 		case 39: // friend rename
 			c.debugln("friend rename")
@@ -123,7 +152,9 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 			if err != nil {
 				return nil, err
 			}
-			c.RenameEvent.dispatch(c, eventConverter.ParseFriendRenameEvent(&pb, c.cache.GetUin(pb.Body.Data.Uid)))
+			ev := eventConverter.ParseFriendRenameEvent(&pb)
+			_ = c.PreprocessOther(ev)
+			c.RenameEvent.dispatch(c, ev)
 			return nil, nil
 		case 29:
 			c.debugln("self rename")
@@ -134,13 +165,41 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 			}
 			c.RenameEvent.dispatch(c, eventConverter.ParseSelfRenameEvent(&pb, &c.transport.Sig))
 			return nil, nil
+		case 290: // friend poke event
+			pb := message.PokeEventData{}
+			err = proto.Unmarshal(pkg.Body.MsgContent, &pb)
+			if err != nil {
+				return nil, err
+			}
+			c.FriendNotifyEvent.dispatch(c, eventConverter.ParsePokeEvent(&pb))
 		default:
 			c.warning("unknown subtype %d of type 0x210, proto data: %x", subType, pkg.Body.MsgContent)
 		}
 	case 0x2DC: // grp event, 732
 		subType := pkg.ContentHead.SubType.Unwrap()
 		switch subType {
-		case 20: // nudget(grp_id only)
+		case 21: // set essence
+			pb := message.EssenceNotify{}
+			err = proto.Unmarshal(pkg.Body.MsgContent, &pb)
+			if err != nil {
+				return nil, err
+			}
+			c.GroupDigestEvent.dispatch(c, eventConverter.ParseGroupDigestEvent(&pb))
+			return nil, nil
+		case 20: // group poke event
+			pb := message.PokeEvent{}
+			err = proto.Unmarshal(pkg.Body.MsgContent, &pb)
+			if err != nil {
+				return nil, err
+			}
+			result, _ := proto.ReadField(4, pkg.Body.MsgContent)
+			var groupUin uint32
+			for _, r := range result {
+				if r.Type == reflect.TypeOf(int64(0)) {
+					groupUin = uint32(r.Vaule.(int64))
+				}
+			}
+			c.GroupNotifyEvent.dispatch(c, eventConverter.PaeseGroupPokeEvent(&pb, groupUin))
 			return nil, nil
 		case 17: // recall
 			reader := binary.NewReader(pkg.Body.MsgContent)
@@ -151,7 +210,9 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 			if err != nil {
 				return nil, err
 			}
-			c.GroupRecallEvent.dispatch(c, eventConverter.ParseGroupRecallEvent(&pb))
+			ev := eventConverter.ParseGroupRecallEvent(&pb)
+			_ = c.PreprocessOther(ev)
+			c.GroupRecallEvent.dispatch(c, ev)
 			return nil, nil
 		case 12: // mute
 			pb := message.GroupMute{}
@@ -159,13 +220,15 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 			if err != nil {
 				return nil, err
 			}
-			c.GroupMuteEvent.dispatch(c, eventConverter.ParseGroupMuteEvent(&pb))
+			ev := eventConverter.ParseGroupMuteEvent(&pb)
+			_ = c.PreprocessOther(ev)
+			c.GroupMuteEvent.dispatch(c, ev)
 			return nil, nil
 		default:
-			c.warning("Unsupported group event, subType: %v", subType)
+			c.warning("Unsupported group event, subType: %v, proto data: %x", subType, pkg.Body.MsgContent)
 		}
 	default:
-		c.warning("Unsupported message type: %v", typ)
+		c.warning("Unsupported message type: %v, proto data: %x", typ, pkg.Body.MsgContent)
 	}
 
 	return nil, nil
@@ -173,4 +236,42 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 
 func decodeKickNTPacket(c *QQClient, pkt *network.Packet) (any, error) {
 	return nil, nil
+}
+
+func (c *QQClient) PreprocessGroupMessageEvent(msg *msgConverter.GroupMessage) error {
+	for _, elem := range msg.Elements {
+		switch e := elem.(type) {
+		case *msgConverter.VoiceElement:
+			url, err := c.GetGroupRecordUrl(msg.GroupUin, e.Node)
+			if err != nil {
+				return err
+			}
+			e.Url = url
+		}
+	}
+	return nil
+}
+
+func (c *QQClient) PreprocessPrivateMessageEvent(msg *msgConverter.PrivateMessage) error {
+	if friend := c.GetCachedFriendInfo(msg.Sender.Uin); friend != nil {
+		msg.Sender.Nickname = friend.Nickname
+	}
+	for _, elem := range msg.Elements {
+		switch e := elem.(type) {
+		case *msgConverter.VoiceElement:
+			url, err := c.GetPrivateRecordUrl(e.Node)
+			if err != nil {
+				return err
+			}
+			e.Url = url
+		}
+	}
+	return nil
+}
+
+func (c *QQClient) PreprocessOther(g eventConverter.CanPreprocess) error {
+	g.ResolveUin(func(uid string) uint32 {
+		return c.GetUin(uid)
+	})
+	return nil
 }

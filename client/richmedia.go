@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bytes"
 	"encoding/hex"
 	"errors"
 
@@ -29,12 +28,11 @@ func oidbIPv4ToNTHighwayIPv4(ipv4s []*oidb2.IPv4) []*highway.NTHighwayIPv4 {
 	return hwipv4s
 }
 
-func (c *QQClient) ImageUploadPrivate(targetUid string, element message.IMessageElement) (*message.FriendImageElement, error) {
-	image, ok := element.(*message.FriendImageElement)
-	if !ok {
-		return nil, errors.New("element type is not friend image")
+func (c *QQClient) ImageUploadPrivate(targetUid string, image *message.ImageElement) (*message.ImageElement, error) {
+	if image == nil || image.Stream == nil {
+		return nil, errors.New("image is nil")
 	}
-	req, err := oidb.BuildImageUploadReq(targetUid, image.Stream)
+	req, err := oidb.BuildPrivateImageUploadReq(targetUid, image)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +40,7 @@ func (c *QQClient) ImageUploadPrivate(targetUid string, element message.IMessage
 	if err != nil {
 		return nil, err
 	}
-	uploadResp, err := oidb.ParseImageUploadResp(resp)
+	uploadResp, err := oidb.ParsePrivateImageUploadResp(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +73,7 @@ func (c *QQClient) ImageUploadPrivate(targetUid string, element message.IMessage
 			return nil, err
 		}
 		err = c.highwayUpload(1003,
-			bytes.NewReader(image.Stream), uint64(len(image.Stream)),
+			image.Stream, uint64(image.Size),
 			md5hash, extStream,
 		)
 		if err != nil {
@@ -92,12 +90,11 @@ func (c *QQClient) ImageUploadPrivate(targetUid string, element message.IMessage
 	return image, nil
 }
 
-func (c *QQClient) ImageUploadGroup(groupUin uint32, element message.IMessageElement) (*message.GroupImageElement, error) {
-	image, ok := element.(*message.GroupImageElement)
-	if !ok {
+func (c *QQClient) ImageUploadGroup(groupUin uint32, image *message.ImageElement) (*message.ImageElement, error) {
+	if image == nil || image.Stream == nil {
 		return nil, errors.New("element type is not group image")
 	}
-	req, err := oidb.BuildGroupImageUploadReq(groupUin, image.Stream)
+	req, err := oidb.BuildGroupImageUploadReq(groupUin, image)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +107,7 @@ func (c *QQClient) ImageUploadGroup(groupUin uint32, element message.IMessageEle
 		return nil, err
 	}
 	ukey := uploadResp.Upload.UKey.Unwrap()
-	c.debugln("private image upload ukey:", ukey)
+	c.debugln("group image upload ukey:", ukey)
 	if ukey != "" {
 		index := uploadResp.Upload.MsgInfo.MsgInfoBody[0].Index
 		sha1hash, err := hex.DecodeString(index.Info.FileSha1)
@@ -138,7 +135,7 @@ func (c *QQClient) ImageUploadGroup(groupUin uint32, element message.IMessageEle
 			return nil, err
 		}
 		err = c.highwayUpload(1004,
-			bytes.NewReader(image.Stream), uint64(len(image.Stream)),
+			image.Stream, uint64(image.Size),
 			md5hash, extStream,
 		)
 		if err != nil {
@@ -146,6 +143,120 @@ func (c *QQClient) ImageUploadGroup(groupUin uint32, element message.IMessageEle
 		}
 	}
 	image.MsgInfo = uploadResp.Upload.MsgInfo
-	image.CompatFace = uploadResp.Upload.CompatQMsg
+	_ = proto.Unmarshal(uploadResp.Upload.CompatQMsg, image.CompatFace)
 	return image, nil
+}
+
+func (c *QQClient) RecordUploadPrivate(targetUid string, record *message.VoiceElement) (*message.VoiceElement, error) {
+	if record == nil || record.Stream == nil {
+		return nil, errors.New("element type is not friend record")
+	}
+	req, err := oidb.BuildPrivateRecordUploadReq(targetUid, record)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.sendOidbPacketAndWait(req)
+	if err != nil {
+		return nil, err
+	}
+	uploadResp, err := oidb.ParsePrivateRecordUploadResp(resp)
+	if err != nil {
+		return nil, err
+	}
+	ukey := uploadResp.Upload.UKey.Unwrap()
+	c.debugln("private record upload ukey:", ukey)
+	if ukey != "" {
+		index := uploadResp.Upload.MsgInfo.MsgInfoBody[0].Index
+		sha1hash, err := hex.DecodeString(index.Info.FileSha1)
+		if err != nil {
+			return nil, err
+		}
+		extend := &highway.NTV2RichMediaHighwayExt{
+			FileUuid: index.FileUuid,
+			UKey:     ukey,
+			Network: &highway.NTHighwayNetwork{
+				IPv4S: oidbIPv4ToNTHighwayIPv4(uploadResp.Upload.IPv4S),
+			},
+			MsgInfoBody: uploadResp.Upload.MsgInfo.MsgInfoBody,
+			BlockSize:   uint32(highway2.BlockSize),
+			Hash: &highway.NTHighwayHash{
+				FileSha1: [][]byte{sha1hash},
+			},
+		}
+		extStream, err := proto.Marshal(extend)
+		if err != nil {
+			return nil, err
+		}
+		md5hash, err := hex.DecodeString(index.Info.FileHash)
+		if err != nil {
+			return nil, err
+		}
+		err = c.highwayUpload(1007,
+			record.Stream, uint64(record.Size),
+			md5hash, extStream,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	record.MsgInfo = uploadResp.Upload.MsgInfo
+	record.Compat = uploadResp.Upload.CompatQMsg
+	return record, nil
+}
+
+func (c *QQClient) RecordUploadGroup(groupUin uint32, record *message.VoiceElement) (*message.VoiceElement, error) {
+	if record == nil || record.Stream == nil {
+		return nil, errors.New("element type is not voice record")
+	}
+	req, err := oidb.BuildGroupRecordUploadReq(groupUin, record)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.sendOidbPacketAndWait(req)
+	if err != nil {
+		return nil, err
+	}
+	uploadResp, err := oidb.ParseGroupRecordUploadResp(resp)
+	if err != nil {
+		return nil, err
+	}
+	ukey := uploadResp.Upload.UKey.Unwrap()
+	c.debugln("group record upload ukey:", ukey)
+	if ukey != "" {
+		index := uploadResp.Upload.MsgInfo.MsgInfoBody[0].Index
+		sha1hash, err := hex.DecodeString(index.Info.FileSha1)
+		if err != nil {
+			return nil, err
+		}
+		extend := &highway.NTV2RichMediaHighwayExt{
+			FileUuid: index.FileUuid,
+			UKey:     ukey,
+			Network: &highway.NTHighwayNetwork{
+				IPv4S: oidbIPv4ToNTHighwayIPv4(uploadResp.Upload.IPv4S),
+			},
+			MsgInfoBody: uploadResp.Upload.MsgInfo.MsgInfoBody,
+			BlockSize:   uint32(highway2.BlockSize),
+			Hash: &highway.NTHighwayHash{
+				FileSha1: [][]byte{sha1hash},
+			},
+		}
+		extStream, err := proto.Marshal(extend)
+		if err != nil {
+			return nil, err
+		}
+		md5hash, err := hex.DecodeString(index.Info.FileHash)
+		if err != nil {
+			return nil, err
+		}
+		err = c.highwayUpload(1008,
+			record.Stream, uint64(record.Size),
+			md5hash, extStream,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	record.MsgInfo = uploadResp.Upload.MsgInfo
+	record.Compat = uploadResp.Upload.CompatQMsg
+	return record, nil
 }

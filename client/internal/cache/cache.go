@@ -38,6 +38,7 @@ func (c *Cache) GetUin(uid string, groupUin ...uint32) (uin uint32) {
 			}
 			return true
 		})
+		return uin
 	}
 	return 0
 }
@@ -46,6 +47,16 @@ func (c *Cache) GetUin(uid string, groupUin ...uint32) (uin uint32) {
 func (c *Cache) GetFriend(uin uint32) *entity.Friend {
 	v, _ := getCacheOf[entity.Friend](c, uin)
 	return v
+}
+
+// GetAllFriends 获取所有好友信息
+func (c *Cache) GetAllFriends() map[uint32]*entity.Friend {
+	friends := make(map[uint32]*entity.Friend, 64)
+	rangeCacheOf[entity.Friend](c, func(k uint32, friend *entity.Friend) bool {
+		friends[k] = friend
+		return true
+	})
+	return friends
 }
 
 // GetGroupInfo 获取群信息

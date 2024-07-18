@@ -5,6 +5,11 @@
 .idea/
 .out/
 
+# vitepress
+node_modules/
+docs/.vitepress/dist
+docs/.vitepress/cache
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
@@ -105,6 +110,7 @@ go.work
 
 # Running stub
 sig.bin
+*.bin
 qrcode.png
 testgroup.png
 testprivate.png

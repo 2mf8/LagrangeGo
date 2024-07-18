@@ -23,7 +23,7 @@ var (
 )
 
 func main() {
-	appInfo := auth.AppList["linux"]
+	appInfo := auth.AppList["linux"]["3.1.2-13107"]
 	deviceInfo := &auth.DeviceInfo{
 		Guid:          "cfcd208495d565ef66e7dff9f98764da",
 		DeviceName:    "Lagrange-DCFCD07E",
@@ -48,8 +48,8 @@ func main() {
 
 	qqclient.GroupMessageEvent.Subscribe(func(client *client.QQClient, event *message.GroupMessage) {
 		if event.ToString() == "114514" {
-			img, _ := os.ReadFile("testgroup.png")
-			_, err := client.SendGroupMessage(event.GroupCode, []message.IMessageElement{&message.GroupImageElement{Stream: img}})
+			img, _ := message.NewFileImage("testgroup.png")
+			_, err := client.SendGroupMessage(event.GroupUin, []message.IMessageElement{img})
 			if err != nil {
 				return
 			}
@@ -57,8 +57,8 @@ func main() {
 	})
 
 	qqclient.PrivateMessageEvent.Subscribe(func(client *client.QQClient, event *message.PrivateMessage) {
-		img, _ := os.ReadFile("testprivate.png")
-		_, err := client.SendPrivateMessage(event.Sender.Uin, []message.IMessageElement{&message.FriendImageElement{Stream: img}})
+		img, _ := message.NewFileImage("testprivate.png")
+		_, err := client.SendPrivateMessage(event.Sender.Uin, []message.IMessageElement{img})
 		if err != nil {
 			return
 		}

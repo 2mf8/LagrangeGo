@@ -174,4 +174,3 @@ message PokeExtra {
   uint32 Field7 = 7;
   uint32  Field8 = 8;
 }
-

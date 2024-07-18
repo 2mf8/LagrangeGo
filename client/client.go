@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/2mf8/LagrangeGo/client/auth"
+
 	"github.com/2mf8/LagrangeGo/client/packets/tlv"
 	"github.com/2mf8/LagrangeGo/client/packets/wtlogin"
 	"github.com/2mf8/LagrangeGo/client/packets/wtlogin/loginState"
@@ -27,7 +29,7 @@ func (c *QQClient) Login(password, qrcodePath string) error {
 		if err != nil {
 			return err
 		}
-		err = c.init()
+		err = c.Register()
 		if err != nil {
 			err = fmt.Errorf("failed to register session: %v", err)
 			c.errorln(err)
@@ -48,7 +50,7 @@ func (c *QQClient) Login(password, qrcodePath string) error {
 		}
 
 		if ret.Successful() {
-			return c.init()
+			return c.Register()
 		}
 	}
 
@@ -66,7 +68,7 @@ func (c *QQClient) Login(password, qrcodePath string) error {
 			}
 			switch {
 			case ret.Successful():
-				return c.init()
+				return c.Register()
 			case ret == loginState.CaptchaVerify:
 				c.warningln("captcha verification required")
 				c.transport.Sig.CaptchaInfo[0] = utils.ReadLine("ticket?->")
@@ -78,7 +80,7 @@ func (c *QQClient) Login(password, qrcodePath string) error {
 		// panic("unreachable")
 	}
 	c.infoln("login with qrcode")
-	png, _, err := c.FecthQRCode()
+	png, _, err := c.FetchQRCodeDefault()
 	if err != nil {
 		return err
 	}
@@ -91,27 +93,7 @@ func (c *QQClient) Login(password, qrcodePath string) error {
 	if err != nil {
 		return err
 	}
-	return c.init()
-}
-
-func (c *QQClient) SessionLogin() error {
-	// prefer session login
-	c.infoln("Session found, try to login with session")
-	c.Uin = c.transport.Sig.Uin
-	if c.Online.Load() {
-		return ErrAlreadyOnline
-	}
-	err := c.connect()
-	if err != nil {
-		return err
-	}
-	err = c.init()
-	if err != nil {
-		err = fmt.Errorf("failed to register session: %v", err)
-		c.errorln(err)
-		return err
-	}
-	return nil
+	return c.Register()
 }
 
 func (c *QQClient) TokenLogin() (loginState.State, error) {
@@ -136,7 +118,11 @@ func (c *QQClient) TokenLogin() (loginState.State, error) {
 	return parseNtloginResponse(packet, &c.transport.Sig)
 }
 
-func (c *QQClient) FecthQRCode() ([]byte, string, error) {
+func (c *QQClient) FetchQRCodeDefault() ([]byte, string, error) {
+	return c.FetchQRCode(3, 4, 2)
+}
+
+func (c *QQClient) FetchQRCode(size, margin, ecLevel uint32) ([]byte, string, error) {
 	if c.Online.Load() {
 		return nil, "", ErrAlreadyOnline
 	}
@@ -152,7 +138,7 @@ func (c *QQClient) FecthQRCode() ([]byte, string, error) {
 		WriteTLV(
 			tlv.T16(c.version().AppID, c.version().SubAppID,
 				utils.MustParseHexStr(c.Device().Guid), c.version().PTVersion, c.version().PackageName),
-			tlv.T1b(),
+			tlv.T1b(0, 0, size, margin, 72, ecLevel, 2),
 			tlv.T1d(c.version().MiscBitmap),
 			tlv.T33(utils.MustParseHexStr(c.Device().Guid)),
 			tlv.T35(c.version().PTOSVersion),
@@ -185,7 +171,7 @@ func (c *QQClient) FecthQRCode() ([]byte, string, error) {
 }
 
 func (c *QQClient) GetQRCodeResult() (qrcodeState.State, error) {
-	c.infoln("get qrcode result")
+	c.debugln("get qrcode result")
 	if c.transport.Sig.Qrsig == nil {
 		return -1, errors.New("no qrsig found, execute fetch_qrcode first")
 	}
@@ -332,7 +318,28 @@ func (c *QQClient) QRCodeLogin(refreshInterval int) error {
 	return c.decodeLoginResponse(response, &c.transport.Sig)
 }
 
-func (c *QQClient) init() error {
+func (c *QQClient) FastLogin(sig *auth.SigInfo) error {
+	if sig != nil {
+		c.UseSig(*sig)
+	}
+	c.Uin = c.transport.Sig.Uin
+	if c.Online.Load() {
+		return ErrAlreadyOnline
+	}
+	err := c.connect()
+	if err != nil {
+		return err
+	}
+	err = c.Register()
+	if err != nil {
+		err = fmt.Errorf("failed to register session: %v", err)
+		c.errorln(err)
+		return err
+	}
+	return nil
+}
+
+func (c *QQClient) Register() error {
 	response, err := c.sendUniPacketAndWait(
 		"trpc.qq_new_tech.status_svc.StatusService.Register",
 		wtlogin.BuildRegisterRequest(c.version(), c.Device()))
@@ -351,27 +358,5 @@ func (c *QQClient) init() error {
 	c.setOnline()
 	go c.doHeartbeat()
 	c.infoln("register succeeded")
-	return nil
-}
-
-func (c *QQClient) Init() error {
-	response, err := c.sendUniPacketAndWait(
-		"trpc.qq_new_tech.status_svc.StatusService.Register",
-		wtlogin.BuildRegisterRequest(c.version(), c.Device()))
-
-	if err != nil {
-		c.errorln(err)
-		return err
-	}
-
-	err = wtlogin.ParseRegisterResponse(response)
-	if err != nil {
-		c.errorln("Register failed:", err)
-		return err
-	}
-	c.transport.Sig.Uin = c.Uin
-	c.setOnline()
-	go c.doHeartbeat()
-	c.info("Register succeeded")
 	return nil
 }

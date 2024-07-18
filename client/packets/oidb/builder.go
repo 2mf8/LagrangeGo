@@ -48,6 +48,9 @@ func ParseOidbPacket(b []byte, pkt any) (oidbBaseResp oidb.OidbSvcTrpcTcpBase, e
 	if err != nil {
 		return
 	}
+	if oidbBaseResp.ErrorCode != 0 {
+		return oidbBaseResp, errors.New(oidbBaseResp.ErrorMsg)
+	}
 	if pkt == nil {
 		return
 	}
@@ -76,4 +79,16 @@ func CheckTypedError[T any](data []byte) error {
 		return errors.New(baseResp.ErrorMsg)
 	}
 	return nil
+}
+
+func ParseTypedError[T any](data []byte) (*T, error) {
+	var resp T
+	baseResp, err := ParseOidbPacket(data, &resp)
+	if err != nil {
+		return nil, err
+	}
+	if baseResp.ErrorCode != 0 {
+		return nil, errors.New(baseResp.ErrorMsg)
+	}
+	return &resp, nil
 }

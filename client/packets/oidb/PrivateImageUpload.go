@@ -3,19 +3,21 @@ package oidb
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"math/rand"
+
+	"github.com/2mf8/LagrangeGo/message"
 
 	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
 	"github.com/2mf8/LagrangeGo/utils"
-	"github.com/2mf8/LagrangeGo/utils/crypto"
 )
 
-func BuildImageUploadReq(targetUid string, data []byte) (*OidbPacket, error) {
+func BuildPrivateImageUploadReq(targetUid string, image *message.ImageElement) (*OidbPacket, error) {
 	// OidbSvcTrpcTcp.0x11c5_100
-	md5Hash := crypto.MD5Digest(data)
-	sha1Hash := crypto.SHA1Digest(data)
-	format, size, err := utils.ImageResolve(data)
+	if image.Stream == nil {
+		return nil, errors.New("image data is null")
+	}
+
+	format, size, err := utils.ImageResolve(image.Stream)
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +52,10 @@ func BuildImageUploadReq(targetUid string, data []byte) (*OidbPacket, error) {
 			UploadInfo: []*oidb.UploadInfo{
 				{
 					FileInfo: &oidb.FileInfo{
-						FileSize: uint32(len(data)),
-						FileHash: fmt.Sprintf("%x", md5Hash),
-						FileSha1: fmt.Sprintf("%x", sha1Hash),
-						FileName: fmt.Sprintf("%x.%s", md5Hash, imageExt),
+						FileSize: image.Size,
+						FileHash: hex.EncodeToString(image.Md5),
+						FileSha1: hex.EncodeToString(image.Sha1),
+						FileName: hex.EncodeToString(image.Md5) + "." + imageExt,
 						Type: &oidb.FileType{
 							Type:        1,
 							PicFormat:   uint32(format),
@@ -75,6 +77,7 @@ func BuildImageUploadReq(targetUid string, data []byte) (*OidbPacket, error) {
 			ExtBizInfo: &oidb.ExtBizInfo{
 				Pic: &oidb.PicExtBizInfo{
 					BytesPbReserveC2C: bytesPbReserveC2c,
+					TextSummary:       image.Summary,
 				},
 				Video: &oidb.VideoExtBizInfo{
 					BytesPbReserve: []byte{},
@@ -92,14 +95,6 @@ func BuildImageUploadReq(targetUid string, data []byte) (*OidbPacket, error) {
 	return BuildOidbPacket(0x11c5, 100, body, false, true)
 }
 
-func ParseImageUploadResp(data []byte) (*oidb.NTV2RichMediaResp, error) {
-	var resp oidb.NTV2RichMediaResp
-	baseResp, err := ParseOidbPacket(data, &resp)
-	if err != nil {
-		return nil, err
-	}
-	if baseResp.ErrorCode != 0 {
-		return nil, errors.New(baseResp.ErrorMsg)
-	}
-	return &resp, nil
+func ParsePrivateImageUploadResp(data []byte) (*oidb.NTV2RichMediaResp, error) {
+	return ParseTypedError[oidb.NTV2RichMediaResp](data)
 }
