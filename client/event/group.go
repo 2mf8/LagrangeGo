@@ -1,7 +1,9 @@
 package event
 
 import (
+	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"github.com/2mf8/LagrangeGo/client/packets/pb/message"
 	"github.com/2mf8/LagrangeGo/utils"
@@ -10,6 +12,20 @@ import (
 type (
 	GroupEvent struct {
 		GroupUin uint32
+	}
+
+	GroupMemberPermissionChanged struct {
+		GroupEvent
+		TargetUin uint32
+		TargetUid string
+		IsAdmin   bool
+	}
+
+	GroupNameUpdated struct {
+		GroupUin    uint32
+		NewName     string
+		OperatorUin uint32
+		OperatorUid string
 	}
 
 	GroupMute struct {
@@ -36,9 +52,11 @@ type (
 		GroupEvent
 		TargetUid  string
 		TargetUin  uint32
+		TargetNick string
 		InvitorUid string
 		InvitorUin uint32
 		Answer     string // 问题：(.*)答案：(.*)
+		RequestSeq uint64
 	}
 
 	GroupMemberIncrease struct {
@@ -80,17 +98,33 @@ type (
 		Suffix   string
 		Action   string
 	}
+
+	// MemberSpecialTitleUpdated 群成员头衔更新事件 from miraigo
+	MemberSpecialTitleUpdated struct {
+		GroupUin uint32
+		Uin      uint32
+		NewTitle string
+	}
 )
 
 type GroupInvite struct {
-	GroupUin   uint32
-	InvitorUid string
-	InvitorUin uint32
+	GroupUin    uint32
+	InvitorUid  string
+	InvitorUin  uint32
+	InvitorNick string
+	RequestSeq  uint64
+}
+
+type JsonParam struct {
+	Cmd  int    `json:"cmd"`
+	Data string `json:"data"`
+	Text string `json:"text"`
+	Url  string `json:"url"`
 }
 
 // CanPreprocess 实现预处理接口，对事件的uid进行转换等操作
 type CanPreprocess interface {
-	ResolveUin(func(uid string) uint32)
+	ResolveUin(func(uid string, groupUin ...uint32) uint32)
 }
 
 func (g *GroupMute) MuteAll() bool {
@@ -105,9 +139,43 @@ func (g *GroupDigestEvent) IsSet() bool {
 	return g.OperationType == 1
 }
 
-func (g *GroupMemberJoinRequest) ResolveUin(f func(uid string) uint32) {
-	g.InvitorUin = f(g.InvitorUid)
-	g.TargetUin = f(g.TargetUid)
+func (g *GroupMemberPermissionChanged) ResolveUin(f func(uid string, groupUin ...uint32) uint32) {
+	g.TargetUin = f(g.TargetUid, g.GroupUin)
+}
+
+func ParseGroupMemberPermissionChanged(event *message.GroupAdmin) *GroupMemberPermissionChanged {
+	var isAdmin bool
+	var uid string
+	if event.Body.ExtraEnable != nil {
+		isAdmin = true
+		uid = event.Body.ExtraEnable.AdminUid
+	} else if event.Body.ExtraDisable != nil {
+		isAdmin = false
+		uid = event.Body.ExtraDisable.AdminUid
+	}
+	return &GroupMemberPermissionChanged{
+		GroupEvent: GroupEvent{
+			GroupUin: event.GroupUin,
+		},
+		TargetUid: uid,
+		IsAdmin:   isAdmin,
+	}
+}
+
+func (g *GroupNameUpdated) ResolveUin(f func(uid string, groupUin ...uint32) uint32) {
+	g.OperatorUin = f(g.OperatorUid, g.GroupUin)
+}
+
+func ParseGroupNameUpdatedEvent(event *message.NotifyMessageBody, groupName string) *GroupNameUpdated {
+	return &GroupNameUpdated{
+		GroupUin:    event.GroupUin,
+		NewName:     groupName,
+		OperatorUid: event.OperatorUid,
+	}
+}
+
+func (g *GroupMemberJoinRequest) ResolveUin(f func(uid string, groupUin ...uint32) uint32) {
+	g.InvitorUin = f(g.InvitorUid, g.GroupUin)
 }
 
 // ParseRequestJoinNotice 成员主动加群
@@ -136,8 +204,8 @@ func ParseRequestInvitationNotice(event *message.GroupInvitation) *GroupMemberJo
 	return nil
 }
 
-func (g *GroupInvite) ResolveUin(f func(uid string) uint32) {
-	g.InvitorUin = f(g.InvitorUid)
+func (g *GroupInvite) ResolveUin(f func(uid string, groupUin ...uint32) uint32) {
+	g.InvitorUin = f(g.InvitorUid, g.GroupUin)
 }
 
 // ParseInviteNotice 被邀请加群
@@ -148,9 +216,9 @@ func ParseInviteNotice(event *message.GroupInvite) *GroupInvite {
 	}
 }
 
-func (g *GroupMemberIncrease) ResolveUin(f func(uid string) uint32) {
-	g.InvitorUin = f(g.InvitorUid)
-	g.MemberUin = f(g.MemberUid)
+func (g *GroupMemberIncrease) ResolveUin(f func(uid string, groupUin ...uint32) uint32) {
+	g.InvitorUin = f(g.InvitorUid, g.GroupUin)
+	g.MemberUin = f(g.MemberUid, g.GroupUin)
 }
 
 func ParseMemberIncreaseEvent(event *message.GroupChange) *GroupMemberIncrease {
@@ -164,9 +232,9 @@ func ParseMemberIncreaseEvent(event *message.GroupChange) *GroupMemberIncrease {
 	}
 }
 
-func (g *GroupMemberDecrease) ResolveUin(f func(uid string) uint32) {
-	g.OperatorUin = f(g.OperatorUid)
-	g.MemberUin = f(g.MemberUid)
+func (g *GroupMemberDecrease) ResolveUin(f func(uid string, groupUin ...uint32) uint32) {
+	g.OperatorUin = f(g.OperatorUid, g.GroupUin)
+	g.MemberUin = f(g.MemberUid, g.GroupUin)
 }
 
 func ParseMemberDecreaseEvent(event *message.GroupChange) *GroupMemberDecrease {
@@ -180,9 +248,9 @@ func ParseMemberDecreaseEvent(event *message.GroupChange) *GroupMemberDecrease {
 	}
 }
 
-func (g *GroupRecall) ResolveUin(f func(uid string) uint32) {
-	g.OperatorUin = f(g.OperatorUid)
-	g.AuthorUin = f(g.AuthorUid)
+func (g *GroupRecall) ResolveUin(f func(uid string, groupUin ...uint32) uint32) {
+	g.OperatorUin = f(g.OperatorUid, g.GroupUin)
+	g.AuthorUin = f(g.AuthorUid, g.GroupUin)
 }
 
 func ParseGroupRecallEvent(event *message.NotifyMessageBody) *GroupRecall {
@@ -200,9 +268,9 @@ func ParseGroupRecallEvent(event *message.NotifyMessageBody) *GroupRecall {
 	return &result
 }
 
-func (g *GroupMute) ResolveUin(f func(uid string) uint32) {
-	g.OperatorUin = f(g.OperatorUid)
-	g.TargetUin = f(g.TargetUid)
+func (g *GroupMute) ResolveUin(f func(uid string, groupUin ...uint32) uint32) {
+	g.OperatorUin = f(g.OperatorUid, g.GroupUin)
+	g.TargetUin = f(g.TargetUid, g.GroupUin)
 }
 
 func ParseGroupMuteEvent(event *message.GroupMute) *GroupMute {
@@ -216,7 +284,7 @@ func ParseGroupMuteEvent(event *message.GroupMute) *GroupMute {
 	}
 }
 
-func ParseGroupDigestEvent(event *message.EssenceNotify) *GroupDigestEvent {
+func ParseGroupDigestEvent(event *message.NotifyMessageBody) *GroupDigestEvent {
 	return &GroupDigestEvent{
 		GroupUin:          event.EssenceMessage.GroupUin,
 		MessageID:         event.EssenceMessage.MsgSequence,
@@ -238,6 +306,24 @@ func PaeseGroupPokeEvent(event *message.NotifyMessageBody, groupUin uint32) *Gro
 		Receiver: e.Receiver,
 		Suffix:   e.Suffix,
 		Action:   e.Action,
+	}
+}
+
+func ParseGroupMemberSpecialTitleUpdatedEvent(event *message.GroupSpecialTitle, groupUin uint32) *MemberSpecialTitleUpdated {
+	re := regexp.MustCompile(`<({.*?})>`)
+	matches := re.FindAllStringSubmatch(event.Content, -1)
+	if len(matches) != 2 {
+		return nil
+	}
+	var medalData JsonParam
+	err := json.Unmarshal([]byte(matches[1][1]), &medalData)
+	if err != nil {
+		return nil
+	}
+	return &MemberSpecialTitleUpdated{
+		GroupUin: groupUin,
+		Uin:      event.TargetUin,
+		NewTitle: medalData.Text,
 	}
 }
 

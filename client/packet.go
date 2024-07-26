@@ -9,8 +9,18 @@ import (
 func (c *QQClient) uniPacket(command string, body []byte) (uint32, []byte) {
 	seq := c.getAndIncreaseSequence()
 	var sign map[string]string
-	if c.signProvider != nil {
-		sign = c.signProvider(command, seq, body)
+	var err error
+	// todo: 实现自动选择sign
+	if len(c.signProvider) != 0 {
+		for _, signProvider := range c.signProvider {
+			sign, err = signProvider(command, seq, body)
+			if err != nil {
+				continue
+			} else {
+				break
+			}
+		}
+
 	}
 	req := network.Request{
 		SequenceID:  seq,

@@ -24,7 +24,7 @@ import (
 )
 
 // NewClient 创建一个新的 QQ Client
-func NewClient(uin uint32, signUrl string, appInfo *auth.AppInfo) *QQClient {
+func NewClient(uin uint32, appInfo *auth.AppInfo, signUrl ...string) *QQClient {
 	client := &QQClient{
 		Uin:  uin,
 		oicq: oicq.NewCodec(int64(uin)),
@@ -34,9 +34,9 @@ func NewClient(uin uint32, signUrl string, appInfo *auth.AppInfo) *QQClient {
 		},
 		alive: true,
 	}
-	client.signProvider = sign.NewProviderURL(signUrl, func(msg string) {
+	client.signProvider = sign.NewProviderURL(func(msg string) {
 		client.debugln(msg)
-	})
+	}, signUrl...)
 	client.transport.Version = appInfo
 	client.transport.Sig.D2Key = make([]byte, 0, 16)
 	client.highwaySession.Uin = &client.transport.Sig.Uin
@@ -48,7 +48,7 @@ func NewClient(uin uint32, signUrl string, appInfo *auth.AppInfo) *QQClient {
 
 type QQClient struct {
 	Uin          uint32
-	signProvider sign.Provider
+	signProvider []sign.Provider
 
 	stat Statistics
 	once sync.Once
@@ -85,18 +85,24 @@ type QQClient struct {
 	SelfPrivateMessageEvent EventHandle[*message.PrivateMessage]
 	SelfTempMessageEvent    EventHandle[*message.TempMessage]
 
-	GroupInvitedEvent           EventHandle[*event.GroupInvite]            // 被邀请入群
-	GroupMemberJoinRequestEvent EventHandle[*event.GroupMemberJoinRequest] // 加群申请
-	GroupMemberJoinEvent        EventHandle[*event.GroupMemberIncrease]    // 成员入群
-	GroupMemberLeaveEvent       EventHandle[*event.GroupMemberDecrease]    // 成员退群
-	GroupMuteEvent              EventHandle[*event.GroupMute]
-	GroupDigestEvent            EventHandle[*event.GroupDigestEvent] // 精华消息
-	GroupRecallEvent            EventHandle[*event.GroupRecall]
-	NewFriendRequestEvent       EventHandle[*event.NewFriendRequest] // 好友申请
-	FriendRecallEvent           EventHandle[*event.FriendRecall]
-	RenameEvent                 EventHandle[*event.Rename]
-	FriendNotifyEvent           EventHandle[event.INotifyEvent]
-	GroupNotifyEvent            EventHandle[event.INotifyEvent]
+	GroupJoinEvent  EventHandle[*event.GroupMemberIncrease] // bot进群
+	GroupLeaveEvent EventHandle[*event.GroupMemberDecrease] // bot 退群
+
+	GroupInvitedEvent                 EventHandle[*event.GroupInvite]            // 被邀请入群
+	GroupMemberJoinRequestEvent       EventHandle[*event.GroupMemberJoinRequest] // 加群申请
+	GroupMemberJoinEvent              EventHandle[*event.GroupMemberIncrease]    // 成员入群
+	GroupMemberLeaveEvent             EventHandle[*event.GroupMemberDecrease]    // 成员退群
+	GroupMuteEvent                    EventHandle[*event.GroupMute]
+	GroupDigestEvent                  EventHandle[*event.GroupDigestEvent] // 精华消息
+	GroupRecallEvent                  EventHandle[*event.GroupRecall]
+	GroupMemberPermissionChangedEvent EventHandle[*event.GroupMemberPermissionChanged]
+	GroupNameUpdatedEvent             EventHandle[*event.GroupNameUpdated]
+	MemberSpecialTitleUpdatedEvent    EventHandle[*event.MemberSpecialTitleUpdated]
+	NewFriendRequestEvent             EventHandle[*event.NewFriendRequest] // 好友申请
+	FriendRecallEvent                 EventHandle[*event.FriendRecall]
+	RenameEvent                       EventHandle[*event.Rename]
+	FriendNotifyEvent                 EventHandle[event.INotifyEvent]
+	GroupNotifyEvent                  EventHandle[event.INotifyEvent]
 
 	// client event handles
 	eventHandlers     eventHandlers
