@@ -145,15 +145,24 @@ func (c *QQClient) RefreshAllGroupsInfo() error {
 
 // GetFriendsData 获取好友列表数据
 func (c *QQClient) GetFriendsData() (map[uint32]*entity.Friend, error) {
-	friends, err := c.FetchFriends()
+	friendsData := make(map[uint32]*entity.Friend)
+	friends, token, err := c.FetchFriends(0)
 	if err != nil {
-		return nil, err
+		return friendsData, err
 	}
-	friendsData := make(map[uint32]*entity.Friend, len(friends))
 	for _, friend := range friends {
 		friendsData[friend.Uin] = friend
 	}
-	c.info("获取%d个好友", len(friendsData))
+	for token != 0 {
+		friends, token, err = c.FetchFriends(token)
+		if err != nil {
+			return friendsData, err
+		}
+		for _, friend := range friends {
+			friendsData[friend.Uin] = friend
+		}
+	}
+	c.debug("获取%d个好友", len(friendsData))
 	return friendsData, err
 }
 
@@ -193,7 +202,7 @@ func (c *QQClient) GetAllGroupsMembersData() (map[uint32]map[uint32]*entity.Grou
 		}
 		groupsData[group.GroupUin] = groupMembersData
 	}
-	c.info("获取%d个群的成员信息", len(groupsData))
+	c.debug("获取%d个群的成员信息", len(groupsData))
 	return groupsData, err
 }
 
@@ -206,6 +215,6 @@ func (c *QQClient) GetAllGroupsInfo() (map[uint32]*entity.Group, error) {
 	for _, group := range groupsInfo {
 		groupsData[group.GroupUin] = group
 	}
-	c.info("获取%d个群信息", len(groupsData))
+	c.debug("获取%d个群信息", len(groupsData))
 	return groupsData, err
 }

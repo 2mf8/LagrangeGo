@@ -12,21 +12,21 @@ import (
 	oidb2 "github.com/2mf8/LagrangeGo/client/packets/oidb"
 )
 
-// FetchFriends 获取好友列表信息
-func (c *QQClient) FetchFriends() ([]*entity.Friend, error) {
-	pkt, err := oidb2.BuildFetchFriendsReq()
+// FetchFriends 获取好友列表信息，使用token可以获取下一页的群成员信息
+func (c *QQClient) FetchFriends(token uint32) ([]*entity.Friend, uint32, error) {
+	pkt, err := oidb2.BuildFetchFriendsReq(token)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	resp, err := c.sendOidbPacketAndWait(pkt)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	friends, err := oidb2.ParseFetchFriendsResp(resp)
+	friends, token, err := oidb2.ParseFetchFriendsResp(resp)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return friends, nil
+	return friends, token, nil
 }
 
 // FetchGroups 获取所有已加入的群的信息
@@ -286,7 +286,33 @@ func (c *QQClient) RecallGroupMessage(GrpUin, seq uint32) error {
 	return nil
 }
 
-// GetPrivateRecordUrl 获取私聊语言下载url
+// GetPrivateImageUrl 获取私聊图片下载url
+func (c *QQClient) GetPrivateImageUrl(node *oidb.IndexNode) (string, error) {
+	pkt, err := oidb2.BuildPrivateImageDownloadReq(c.GetUid(c.Uin), node)
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.sendOidbPacketAndWait(pkt)
+	if err != nil {
+		return "", err
+	}
+	return oidb2.ParsePrivateImageDownloadResp(resp)
+}
+
+// GetGroupImageUrl 获取群聊图片下载url
+func (c *QQClient) GetGroupImageUrl(groupUin uint32, node *oidb.IndexNode) (string, error) {
+	pkt, err := oidb2.BuildGroupImageDownloadReq(groupUin, node)
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.sendOidbPacketAndWait(pkt)
+	if err != nil {
+		return "", err
+	}
+	return oidb2.ParseGroupImageDownloadResp(resp)
+}
+
+// GetPrivateRecordUrl 获取私聊语音下载url
 func (c *QQClient) GetPrivateRecordUrl(node *oidb.IndexNode) (string, error) {
 	pkt, err := oidb2.BuildPrivateRecordDownloadReq(c.GetUid(c.Uin), node)
 	if err != nil {
@@ -312,9 +338,48 @@ func (c *QQClient) GetGroupRecordUrl(groupUin uint32, node *oidb.IndexNode) (str
 	return oidb2.ParseGroupRecordDownloadResp(resp)
 }
 
+// GetGroupFileUrl 获取群聊文件下载url
+func (c *QQClient) GetGroupFileUrl(groupUin uint32, fileID string) (string, error) {
+	pkt, err := oidb2.BuildGroupFSDownloadReq(groupUin, fileID)
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.sendOidbPacketAndWait(pkt)
+	if err != nil {
+		return "", err
+	}
+	return oidb2.ParseGroupFSDownloadResp(resp)
+}
+
+// GetPrivateFileUrl 获取私聊文件下载url
+func (c *QQClient) GetPrivateFileUrl(fileUUID string, fileHash string) (string, error) {
+	pkt, err := oidb2.BuildPrivateFileDownloadReq(c.GetUid(c.Uin), fileUUID, fileHash)
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.sendOidbPacketAndWait(pkt)
+	if err != nil {
+		return "", err
+	}
+	return oidb2.ParsePrivateFileDownloadResp(resp)
+}
+
 // FetchUserInfo 获取用户信息
 func (c *QQClient) FetchUserInfo(uid string) (*entity.Friend, error) {
 	pkt, err := oidb2.BuildFetchUserInfoReq(uid)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.sendOidbPacketAndWait(pkt)
+	if err != nil {
+		return nil, err
+	}
+	return oidb2.ParseFetchUserInfoResp(resp)
+}
+
+// FetchUserInfoUin 通过uin获取用户信息
+func (c *QQClient) FetchUserInfoUin(uin uint32) (*entity.Friend, error) {
+	pkt, err := oidb2.BuildFetchUserInfoReq(uin)
 	if err != nil {
 		return nil, err
 	}
@@ -349,4 +414,43 @@ func (c *QQClient) SetGroupRequest(accept bool, sequence uint64, typ uint32, gro
 		return err
 	}
 	return oidb2.ParseSetGroupRequestResp(resp)
+}
+
+// SetFriendRequest 处理好友请求
+func (c *QQClient) SetFriendRequest(accept bool, targetUid string) error {
+	pkt, err := oidb2.BuildSetFriendRequest(accept, targetUid)
+	if err != nil {
+		return err
+	}
+	resp, err := c.sendOidbPacketAndWait(pkt)
+	if err != nil {
+		return err
+	}
+	return oidb2.ParseSetFriendRequestResp(resp)
+}
+
+// FetchClientKey 获取ClientKey
+func (c *QQClient) FetchClientKey() (string, error) {
+	pkt, err := oidb2.BuildFetchClientKeyReq()
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.sendOidbPacketAndWait(pkt)
+	if err != nil {
+		return "", err
+	}
+	return oidb2.ParseFetchClientKeyResp(resp)
+}
+
+// FetchCookies 获取cooikes
+func (c *QQClient) FetchCookies(domains []string) ([]string, error) {
+	pkt, err := oidb2.BuildFetchCookieReq(domains)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.sendOidbPacketAndWait(pkt)
+	if err != nil {
+		return nil, err
+	}
+	return oidb2.ParseFetchCookieResp(resp)
 }

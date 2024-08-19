@@ -262,17 +262,41 @@ func parseMessageElements(msg []*message.Elem) []IMessageElement {
 		}
 
 		// new protocol image
-		if elem.CommonElem != nil && elem.CommonElem.ServiceType == 48 && elem.CommonElem.BusinessType == 20 {
-			pb := message.CommonElemImagePb{}
-			err := proto.Unmarshal(elem.CommonElem.PbElem, &pb)
+		if elem.CommonElem != nil && (elem.CommonElem.BusinessType == 20 || elem.CommonElem.BusinessType == 10) {
+			extra := &oidb2.MsgInfo{}
+			err := proto.Unmarshal(elem.CommonElem.PbElem, extra)
 			if err != nil {
 				continue
 			}
+			index := extra.MsgInfoBody[0].Index
+			summary := "[图片]"
+			if extra.ExtBizInfo.Pic.TextSummary != "" {
+				summary = extra.ExtBizInfo.Pic.TextSummary
+			}
 			res = append(res, &ImageElement{
-				ImageId: pb.Field1.Extra.FileUuid,
-				Size:    pb.Field1.Extra.Info.Size,
-				Url:     "https://multimedia.nt.qq.com.cn" + pb.Field2.DownloadInfo.Info.PathWithRkey,
-				Md5:     utils.MustParseHexStr(pb.Field1.Extra.Info.Md5),
+				ImageType: int32(extra.ExtBizInfo.Pic.BizType),
+				Summary:   summary,
+				Width:     index.Info.Width,
+				Height:    index.Info.Height,
+				ImageId:   index.Info.FileName,
+				Size:      index.Info.FileSize,
+				MsgInfo:   extra,
+			})
+		}
+
+		if elem.TransElem != nil && elem.TransElem.ElemType == 24 {
+			payload := binary.NewReader(elem.TransElem.ElemValue)
+			payload.SkipBytes(1)
+			data := payload.ReadBytesWithLength("u16", false)
+			extra := message.GroupFileExtra{}
+			if err := proto.Unmarshal(data, &extra); err != nil {
+				continue
+			}
+			res = append(res, &FileElement{
+				FileSize: extra.Inner.Info.FileSize,
+				FileMd5:  []byte(extra.Inner.Info.FileMd5),
+				FileId:   extra.Inner.Info.FileId,
+				FileName: extra.Inner.Info.FileName,
 			})
 		}
 
@@ -318,6 +342,21 @@ func ParseMessageBody(body *message.MessageBody, isGroup bool) []IMessageElement
 					Node: &oidb2.IndexNode{
 						FileUuid: ptt.FileUuid,
 					},
+				})
+			}
+		}
+		if body.MsgContent != nil {
+			extra := message.FileExtra{}
+			if err := proto.Unmarshal(body.MsgContent, &extra); err != nil {
+				return res
+			}
+			if extra.File.FileSize.IsSome() && extra.File.FileName.IsSome() && extra.File.FileMd5 != nil && extra.File.FileUuid.IsSome() && extra.File.FileHash.IsSome() {
+				res = append(res, &FileElement{
+					FileSize: uint64(extra.File.FileSize.Unwrap()),
+					FileName: extra.File.FileName.Unwrap(),
+					FileMd5:  extra.File.FileMd5,
+					FileUUID: extra.File.FileUuid.Unwrap(),
+					FileHash: extra.File.FileHash.Unwrap(),
 				})
 			}
 		}

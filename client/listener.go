@@ -38,7 +38,7 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 		return nil, errors.New("message body is empty")
 	}
 	switch typ {
-	case 166, 208: // 166 for private msg, 208 for private record
+	case 166, 208, 529: // 166 for private msg, 208 for private record, 529 for private file
 		prvMsg := msgConverter.ParsePrivateMessage(&msg)
 		_ = c.PreprocessPrivateMessageEvent(prvMsg)
 		if prvMsg.Sender.Uin != c.Uin {
@@ -184,7 +184,16 @@ func decodeOlPushServicePacket(c *QQClient, pkt *network.Packet) (any, error) {
 			if err != nil {
 				return nil, err
 			}
-			c.NewFriendRequestEvent.dispatch(c, eventConverter.ParseFriendRequestNotice(&pb, &msg))
+			if pb.Info == nil {
+				break
+			}
+			ev := eventConverter.ParseFriendRequestNotice(&pb)
+			user, _ := c.FetchUserInfo(ev.SourceUid)
+			if user != nil {
+				ev.SourceUin = user.Uin
+				ev.SourceNick = user.Nickname
+			}
+			c.NewFriendRequestEvent.dispatch(c, ev)
 			return nil, nil
 		case 138: // friend recall
 			pb := message.FriendRecall{}
@@ -318,12 +327,18 @@ func decodeKickNTPacket(c *QQClient, pkt *network.Packet) (any, error) {
 func (c *QQClient) PreprocessGroupMessageEvent(msg *msgConverter.GroupMessage) error {
 	for _, elem := range msg.Elements {
 		switch e := elem.(type) {
-		case *msgConverter.VoiceElement:
-			url, err := c.GetGroupRecordUrl(msg.GroupUin, e.Node)
-			if err != nil {
-				return err
+		case *msgConverter.ImageElement:
+			if e.Url != "" {
+				continue
 			}
+			url, _ := c.GetGroupImageUrl(msg.GroupUin, e.MsgInfo.MsgInfoBody[0].Index)
 			e.Url = url
+		case *msgConverter.VoiceElement:
+			url, _ := c.GetGroupRecordUrl(msg.GroupUin, e.Node)
+			e.Url = url
+		case *msgConverter.FileElement:
+			url, _ := c.GetGroupFileUrl(msg.GroupUin, e.FileId)
+			e.FileUrl = url
 		}
 	}
 	return nil
@@ -335,12 +350,24 @@ func (c *QQClient) PreprocessPrivateMessageEvent(msg *msgConverter.PrivateMessag
 	}
 	for _, elem := range msg.Elements {
 		switch e := elem.(type) {
+		case *msgConverter.ImageElement:
+			if e.Url != "" {
+				continue
+			}
+			url, _ := c.GetPrivateImageUrl(e.MsgInfo.MsgInfoBody[0].Index)
+			e.Url = url
 		case *msgConverter.VoiceElement:
 			url, err := c.GetPrivateRecordUrl(e.Node)
 			if err != nil {
 				return err
 			}
 			e.Url = url
+		case *msgConverter.FileElement:
+			url, err := c.GetPrivateFileUrl(e.FileUUID, e.FileHash)
+			if err != nil {
+				return err
+			}
+			e.FileUrl = url
 		}
 	}
 	return nil

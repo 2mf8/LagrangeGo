@@ -3,8 +3,6 @@ package sign
 import (
 	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -77,7 +75,7 @@ func NewProviderURL(log func(msg string), rawUrls ...string) []Provider {
 	providers := make([]Provider, len(rawUrls))
 	for i, rawUrl := range rawUrls {
 		localRawUrl := rawUrl
-		providers[i] = func(cmd string, seq uint32, buf []byte) (map[string]string, error) {
+		providers[i] = func(cmd string, seq uint32, buf []byte, header map[string]string) (map[string]string, error) {
 			if !containSignPKG(cmd) {
 				return nil, nil
 			}
@@ -87,15 +85,19 @@ func NewProviderURL(log func(msg string), rawUrls ...string) []Provider {
 			sb.WriteString(`{"cmd":"` + cmd + `",`)
 			sb.WriteString(`"seq":` + strconv.Itoa(int(seq)) + `,`)
 			sb.WriteString(`"src":"` + fmt.Sprintf("%x", buf) + `"}`)
-			err := httpPost(localRawUrl, bytes.NewReader(utils.S2B(sb.String())), 8*time.Second, &resp, map[string]string{
+			newHeaders := map[string]string{
 				"Content-Type": "application/json",
-			})
+			}
+			for k, v := range header {
+				newHeaders[k] = v
+			}
+			err := httpPost(localRawUrl, bytes.NewReader(utils.S2B(sb.String())), 8*time.Second, &resp, newHeaders)
 			if err != nil || resp.Value.Sign == "" {
 				err := httpGet(localRawUrl, map[string]string{
 					"cmd": cmd,
 					"seq": strconv.Itoa(int(seq)),
 					"src": fmt.Sprintf("%x", buf),
-				}, 8*time.Second, &resp)
+				}, 8*time.Second, &resp, header)
 				if err != nil {
 					log(err.Error())
 					return nil, err
@@ -115,7 +117,7 @@ func NewProviderURL(log func(msg string), rawUrls ...string) []Provider {
 	return providers
 }
 
-func httpGet(rawUrl string, queryParams map[string]string, timeout time.Duration, target interface{}) error {
+func httpGet(rawUrl string, queryParams map[string]string, timeout time.Duration, target interface{}, header map[string]string) error {
 	u, err := url.Parse(rawUrl)
 	if err != nil {
 		return fmt.Errorf("failed to parse URL: %w", err)
@@ -134,28 +136,8 @@ func httpGet(rawUrl string, queryParams map[string]string, timeout time.Duration
 	if err != nil {
 		return fmt.Errorf("failed to create GET request: %w", err)
 	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			return fmt.Errorf("request timed out")
-		}
-		resp, err = http.DefaultClient.Do(req)
-		if err != nil {
-			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				return fmt.Errorf("request timed out")
-			}
-			return fmt.Errorf("failed to perform GET request: %w", err)
-		}
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(target); err != nil {
-		return fmt.Errorf("failed to unmarshal JSON response: %w", err)
+	for k, v := range header {
+		req.Header.Set(k, v)
 	}
 
 	return nil
@@ -174,32 +156,8 @@ func httpPost(rawUrl string, body io.Reader, timeout time.Duration, target inter
 	if err != nil {
 		return fmt.Errorf("failed to create POST request: %w", err)
 	}
-
 	for k, v := range header {
 		req.Header.Set(k, v)
-	}
-	
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			return fmt.Errorf("request timed out")
-		}
-		resp, err = http.DefaultClient.Do(req)
-		if err != nil {
-			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				return fmt.Errorf("request timed out")
-			}
-			return fmt.Errorf("failed to perform POST request: %w", err)
-		}
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(target); err != nil {
-		return fmt.Errorf("failed to unmarshal JSON response: %w", err)
 	}
 
 	return nil

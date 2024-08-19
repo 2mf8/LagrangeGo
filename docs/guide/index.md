@@ -1,21 +1,14 @@
-# LagrangeGo
-ntqq 协议的golang实现 移植于 [Lagrange.Core](https://github.com/KonataDev/Lagrange.Core) /
-[lagrange-python](https://github.com/2mf8/lagrange-python) / [MiraiGo](https://github.com/Mrs4s/MiraiGo)
+# 简介
 
-## 使用前声明
-本项目为协议实现，不推荐直接使用。
+LagrengeGo是一个NTQQ协议的sdk
 
-## 使用方法
+移植于 [Lagrange.Core](https://github.com/KonataDev/Lagrange.Core) / [lagrange-python](https://github.com/2mf8/lagrange-python) / [MiraiGo](https://github.com/Mrs4s/MiraiGo)
 
-```bash
-go get -u github.com/2mf8/LagrangeGo
-```
-
-## 支持的功能
+项目主页：https://github.com/2mf8/LagrangeGo
 
 ## 协议支持
 
-<details>
+<details open>
   <summary>已完成功能/开发计划列表</summary>
 
 **登录**
@@ -83,20 +76,3 @@ _为防止滥用，不支持主动邀请新成员进群_
 - [ ] ~~获取陌生人信息~~
 
 </details>
-
-### 不支持的协议
-**基于 [QQ钱包支付用户服务协议](https://www.tenpay.com/v2/html5/basic/public/agreement/protocol_mqq_pay.shtml) 不支持一切有关QQ钱包的协议**
-
->4.13 您不得利用本服务实施下列任一的行为：
->\
->     （9） **侵害QQ钱包支付服务系統；**
-
-- [ ] ~~QQ钱包协议(收款/付款等)~~
-
-### 贡献者
-
-[![Contributors](https://contributors-img.web.app/image?repo=2mf8/LagrangeGo)](https://github.com/2mf8/LagrangeGo/graphs/contributors)
-
-[MiraiGo](https://github.com/Mrs4s/MiraiGo)
-[![Contributors](https://contributors-img.web.app/image?repo=Mrs4s/MiraiGo)](https://github.com/Mrs4s/MiraiGo/graphs/contributors)
-
