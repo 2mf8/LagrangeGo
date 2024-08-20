@@ -1,21 +1,21 @@
 package sign
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
-	"strings"
 	"time"
-
-	"github.com/2mf8/LagrangeGo/utils"
 )
 
 var (
-	signMap = map[string]struct{}{} // 只在启动时初始化, 无并发问题
+	signMap    = map[string]struct{}{} // 只在启动时初始化, 无并发问题
+	httpClient = &http.Client{
+		Timeout: 5 * time.Second,
+	}
 )
 
 func init() {
@@ -68,56 +68,7 @@ func containSignPKG(cmd string) bool {
 	return ok
 }
 
-func NewProviderURL(log func(msg string), rawUrls ...string) []Provider {
-	if len(rawUrls) == 0 {
-		return nil
-	}
-	providers := make([]Provider, len(rawUrls))
-	for i, rawUrl := range rawUrls {
-		localRawUrl := rawUrl
-		providers[i] = func(cmd string, seq uint32, buf []byte, header map[string]string) (map[string]string, error) {
-			if !containSignPKG(cmd) {
-				return nil, nil
-			}
-			startTime := time.Now().UnixMilli()
-			resp := signResponse{}
-			sb := strings.Builder{}
-			sb.WriteString(`{"cmd":"` + cmd + `",`)
-			sb.WriteString(`"seq":` + strconv.Itoa(int(seq)) + `,`)
-			sb.WriteString(`"src":"` + fmt.Sprintf("%x", buf) + `"}`)
-			newHeaders := map[string]string{
-				"Content-Type": "application/json",
-			}
-			for k, v := range header {
-				newHeaders[k] = v
-			}
-			err := httpPost(localRawUrl, bytes.NewReader(utils.S2B(sb.String())), 8*time.Second, &resp, newHeaders)
-			if err != nil || resp.Value.Sign == "" {
-				err := httpGet(localRawUrl, map[string]string{
-					"cmd": cmd,
-					"seq": strconv.Itoa(int(seq)),
-					"src": fmt.Sprintf("%x", buf),
-				}, 8*time.Second, &resp, header)
-				if err != nil {
-					log(err.Error())
-					return nil, err
-				}
-			}
-
-			log(fmt.Sprintf("signed for [%s:%d](%dms)",
-				cmd, seq, time.Now().UnixMilli()-startTime))
-
-			return map[string]string{
-				"sign":  resp.Value.Sign,
-				"extra": resp.Value.Extra,
-				"token": resp.Value.Token,
-			}, nil
-		}
-	}
-	return providers
-}
-
-func httpGet(rawUrl string, queryParams map[string]string, timeout time.Duration, target interface{}, header map[string]string) error {
+func httpGet(rawUrl string, queryParams map[string]string, timeout time.Duration, target interface{}, header http.Header) error {
 	u, err := url.Parse(rawUrl)
 	if err != nil {
 		return fmt.Errorf("failed to parse URL: %w", err)
@@ -136,14 +87,38 @@ func httpGet(rawUrl string, queryParams map[string]string, timeout time.Duration
 	if err != nil {
 		return fmt.Errorf("failed to create GET request: %w", err)
 	}
-	for k, v := range header {
-		req.Header.Set(k, v)
+	for k, vs := range header {
+		for _, v := range vs {
+			req.Header.Add(k, v)
+		}
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return fmt.Errorf("request timed out")
+		}
+		resp, err = httpClient.Do(req)
+		if err != nil {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return fmt.Errorf("request timed out")
+			}
+			return fmt.Errorf("failed to perform GET request: %w", err)
+		}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(target); err != nil {
+		return fmt.Errorf("failed to unmarshal JSON response: %w", err)
 	}
 
 	return nil
 }
 
-func httpPost(rawUrl string, body io.Reader, timeout time.Duration, target interface{}, header map[string]string) error {
+func httpPost(rawUrl string, body io.Reader, timeout time.Duration, target interface{}, header http.Header) error {
 	u, err := url.Parse(rawUrl)
 	if err != nil {
 		return fmt.Errorf("failed to parse URL: %w", err)
@@ -156,14 +131,38 @@ func httpPost(rawUrl string, body io.Reader, timeout time.Duration, target inter
 	if err != nil {
 		return fmt.Errorf("failed to create POST request: %w", err)
 	}
-	for k, v := range header {
-		req.Header.Set(k, v)
+	for k, vs := range header {
+		for _, v := range vs {
+			req.Header.Add(k, v)
+		}
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return fmt.Errorf("request timed out")
+		}
+		resp, err = httpClient.Do(req)
+		if err != nil {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return fmt.Errorf("request timed out")
+			}
+			return fmt.Errorf("failed to perform POST request: %w", err)
+		}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(target); err != nil {
+		return fmt.Errorf("failed to unmarshal JSON response: %w", err)
 	}
 
 	return nil
 }
 
-type signResponse struct {
+type Response struct {
 	Value struct {
 		Sign  string `json:"sign"`
 		Extra string `json:"extra"`
