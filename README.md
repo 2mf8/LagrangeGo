@@ -1,6 +1,6 @@
 # LagrangeGo
 ntqq 协议的golang实现 移植于 [Lagrange.Core](https://github.com/KonataDev/Lagrange.Core) /
-[lagrange-python](https://github.com/2mf8/lagrange-python) / [MiraiGo](https://github.com/Mrs4s/MiraiGo)
+[lagrange-python](https://github.com/LagrangeDev/lagrange-python) / [MiraiGo](https://github.com/Mrs4s/MiraiGo)
 
 ## 使用前声明
 本项目为协议实现，不推荐直接使用。
@@ -8,7 +8,7 @@ ntqq 协议的golang实现 移植于 [Lagrange.Core](https://github.com/KonataDe
 ## 使用方法
 
 ```bash
-go get -u github.com/2mf8/LagrangeGo
+go get -u github.com/LagrangeDev/LagrangeGo
 ```
 
 ## 支持的功能
@@ -37,7 +37,7 @@ go get -u github.com/2mf8/LagrangeGo
 - [x] 小程序(暂只支持RAW)
 - [ ] 短视频
 - [x] 合并转发
-- [ ] 群文件(上传与接收信息)
+- [x] 私聊文件&群文件(上传与接收信息)
 
 **事件**
 - [x] 好友消息
@@ -95,7 +95,7 @@ _为防止滥用，不支持主动邀请新成员进群_
 
 ### 贡献者
 
-[![Contributors](https://contributors-img.web.app/image?repo=2mf8/LagrangeGo)](https://github.com/2mf8/LagrangeGo/graphs/contributors)
+[![Contributors](https://contributors-img.web.app/image?repo=LagrangeDev/LagrangeGo)](https://github.com/LagrangeDev/LagrangeGo/graphs/contributors)
 
 [MiraiGo](https://github.com/Mrs4s/MiraiGo)
 [![Contributors](https://contributors-img.web.app/image?repo=Mrs4s/MiraiGo)](https://github.com/Mrs4s/MiraiGo/graphs/contributors)

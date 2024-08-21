@@ -2,7 +2,7 @@
 
 ## QQClient
 
-位于`github.com/2mf8/LagrangeGo/client`
+位于`github.com/LagrangeDev/LagrangeGo/client`
 
 > 创建一个QQClient，参数分别是qq号，[appinfo](/api/appInfo)，[sign地址](/guide/sign)
 

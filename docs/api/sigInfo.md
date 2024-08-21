@@ -1,6 +1,6 @@
 # SigInfo
 
-位于`github.com/2mf8/LagrangeGo/client/auth`
+位于`github.com/LagrangeDev/LagrangeGo/client/auth`
 
 > sig的序列化与反序列化
 ```go

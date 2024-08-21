@@ -2,6 +2,7 @@ package sign
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -118,7 +119,7 @@ func (c *Client) Sign(cmd string, seq uint32, data []byte) (*Response, error) {
 			if err != nil {
 				sign.status.Store(uint32(Down))
 				continue
-			} else if resp.Value.Extra != c.app.SignExtraHex {
+			} else if strings.ToLower(resp.Value.Extra) != c.app.SignExtraHex {
 				return nil, VersionMismatchError
 			}
 			c.log(fmt.Sprintf("signed for [%s:%d](%dms)",
@@ -152,11 +153,20 @@ func (i *Instance) sign(cmd string, seq uint32, buf []byte, header http.Header) 
 		return nil, nil
 	}
 	resp := Response{}
-	sb := strings.Builder{}
-	sb.WriteString(`{"cmd":"` + cmd + `",`)
-	sb.WriteString(`"seq":` + strconv.Itoa(int(seq)) + `,`)
-	sb.WriteString(`"src":"` + fmt.Sprintf("%x", buf) + `"}`)
-	err := httpPost(i.server, bytes.NewReader(utils.S2B(sb.String())), 8*time.Second, &resp, header)
+	sign := struct {
+		Cmd string `json:"cmd"`
+		Seq int    `json:"seq"`
+		Src string `json:"src"`
+	}{
+		Cmd: cmd,
+		Seq: int(seq),
+		Src: fmt.Sprintf("%x", buf),
+	}
+	sb, err := json.Marshal(sign)
+	if err != nil {
+		return nil, err
+	}
+	err = httpPost(i.server, bytes.NewBuffer(sb), 8*time.Second, &resp, header)
 	if err != nil || resp.Value.Sign == "" {
 		err := httpGet(i.server, map[string]string{
 			"cmd": cmd,

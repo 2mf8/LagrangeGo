@@ -53,7 +53,7 @@ export default defineConfig({
       }
     ],
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/2mf8/LagrangeGo' }
+      { icon: 'github', link: 'https://github.com/LagrangeDev/LagrangeGo' }
     ],
     outline: {
       label: '目录'
@@ -63,7 +63,7 @@ export default defineConfig({
       next: '下一页'
     },
     editLink: {
-      pattern: 'https://github.com/2mf8/LagrangeGo/edit/master/docs/:path'
+      pattern: 'https://github.com/LagrangeDev/LagrangeGo/edit/master/docs/:path'
     },
     lightModeSwitchTitle: "切换到浅色模式",
     darkModeSwitchTitle: "切换到深色模式",

@@ -1,6 +1,6 @@
 # DeviceInfo
 
-位于`github.com/2mf8/LagrangeGo/client/auth`
+位于`github.com/LagrangeDev/LagrangeGo/client/auth`
 
 > 创建一个新的DeviceInfo，使用随机数字作为参数
 ```go

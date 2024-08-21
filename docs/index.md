@@ -9,7 +9,7 @@ hero:
   actions:
     - theme: brand
       text: 项目地址
-      link: https://github.com/2mf8/LagrangeGo
+      link: https://github.com/LagrangeDev/LagrangeGo
     - theme: alt
       text: 简介
       link: /guide

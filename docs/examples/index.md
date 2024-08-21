@@ -15,10 +15,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/2mf8/LagrangeGo/client"
-	"github.com/2mf8/LagrangeGo/client/auth"
-	"github.com/2mf8/LagrangeGo/message"
-	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/LagrangeDev/LagrangeGo/client"
+	"github.com/LagrangeDev/LagrangeGo/client/auth"
+	"github.com/LagrangeDev/LagrangeGo/message"
+	"github.com/LagrangeDev/LagrangeGo/utils"
 	"github.com/mattn/go-colorable"
 	"github.com/sirupsen/logrus"
 )

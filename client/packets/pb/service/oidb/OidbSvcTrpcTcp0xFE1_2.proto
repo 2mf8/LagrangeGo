@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb";
+option go_package = "github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb";
 
 import "pb/service/oidb/generics.proto";
 
