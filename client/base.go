@@ -4,10 +4,16 @@ package client
 
 import (
 	"errors"
+	"net/http"
+	"net/http/cookiejar"
 	"net/netip"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"golang.org/x/net/publicsuffix"
+
+	"github.com/2mf8/LagrangeGo/utils/log"
 
 	"github.com/RomiChan/syncx"
 
@@ -25,12 +31,17 @@ import (
 
 // NewClient 创建一个新的 QQ Client
 func NewClient(uin uint32, appInfo *auth.AppInfo, signUrl ...string) *QQClient {
+	cookieContainer, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	client := &QQClient{
 		Uin:  uin,
 		oicq: oicq.NewCodec(int64(uin)),
 		highwaySession: highway.Session{
 			AppID:    uint32(appInfo.AppID),
 			SubAppID: uint32(appInfo.SubAppID),
+		},
+		ticket: &TicketService{
+			client: &http.Client{Jar: cookieContainer},
+			sKey:   &keyInfo{},
 		},
 		alive: true,
 		UA:    "LagrangeGo qq/" + appInfo.PackageSign,
@@ -65,8 +76,9 @@ type QQClient struct {
 	ConnectTime    time.Time
 	transport      network.Transport
 	oicq           *oicq.Codec
-	logger         Logger
+	logger         log.Logger
 	highwaySession highway.Session
+	ticket         *TicketService
 
 	// internal state
 	handlers        syncx.Map[uint32, *handlerInfo]
