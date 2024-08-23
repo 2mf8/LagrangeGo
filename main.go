@@ -12,6 +12,7 @@ import (
 
 	"github.com/2mf8/LagrangeGo/client"
 	"github.com/2mf8/LagrangeGo/client/auth"
+	"github.com/2mf8/LagrangeGo/client/event"
 	"github.com/2mf8/LagrangeGo/message"
 	"github.com/2mf8/LagrangeGo/utils"
 	"github.com/mattn/go-colorable"
@@ -31,7 +32,7 @@ func main() {
 		KernelVersion: "10.0.22631",
 	}
 
-	qqclient := client.NewClient(0, appInfo, "https://sign.lagrangecore.org/api/sign/25765")
+	qqclient := client.NewClient(0, appInfo, "https://sign.ciallo.site/api/sign")
 	qqclient.SetLogger(protocolLogger{})
 	qqclient.UseDevice(deviceInfo)
 	data, err := os.ReadFile("sig.bin")
@@ -54,6 +55,10 @@ func main() {
 				return
 			}
 		}
+	})
+
+	qqclient.GroupInvitedEvent.Subscribe(func(client *client.QQClient, event *event.GroupInvite) {
+		fmt.Println(event.GroupUin, event.RequestSeq, event.InvitorNick)
 	})
 
 	qqclient.PrivateMessageEvent.Subscribe(func(client *client.QQClient, event *message.PrivateMessage) {
