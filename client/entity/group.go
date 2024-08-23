@@ -33,5 +33,5 @@ type (
 )
 
 func (r *GroupJoinRequest) Checked() bool {
-	return r.State == Processed || r.State == Unprocessed
+	return r.State != Processed && r.State != Unprocessed
 }
