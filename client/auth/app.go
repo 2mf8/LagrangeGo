@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/internal/proto"
 )
 
 var AppList = map[string]map[string]*AppInfo{

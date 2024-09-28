@@ -1,6 +1,6 @@
 package network
 
-import "github.com/LagrangeDev/LagrangeGo/client/sign"
+import "github.com/2mf8/LagrangeGo/client/sign"
 
 // from https://github.com/Mrs4s/MiraiGo/blob/master/client/internal/network/request.go
 

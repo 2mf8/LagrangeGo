@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/album"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/album"
+	"github.com/2mf8/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 func BuildGetMediaListReq(selfUin uint32, groupUin uint32, albumId string, pageInfo string) ([]byte, error) {

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/message"
+	"github.com/2mf8/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/binary"
 )
 
 type ElementBuilder interface {

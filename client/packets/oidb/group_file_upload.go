@@ -3,8 +3,8 @@ package oidb
 import (
 	"errors"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
-	"github.com/LagrangeDev/LagrangeGo/message"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/message"
 )
 
 func BuildGroupFileUploadReq(groupUin uint32, file *message.FileElement, targetDirectory string) (*OidbPacket, error) {

@@ -1,6 +1,6 @@
 package audio
 
-// https://github.com/LagrangeDev/lagrange-python/tree/broken/lagrange/utils/audio
+// https://github.com/2mf8/lagrange-python/tree/broken/lagrange/utils/audio
 
 import (
 	binary2 "encoding/binary"
@@ -9,8 +9,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/binary"
 )
 
 type AudioInfo struct {

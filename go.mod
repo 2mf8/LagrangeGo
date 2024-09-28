@@ -1,4 +1,4 @@
-module github.com/LagrangeDev/LagrangeGo
+module github.com/2mf8/LagrangeGo
 
 go 1.20
 

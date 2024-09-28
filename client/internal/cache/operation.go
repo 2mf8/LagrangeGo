@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/LagrangeDev/LagrangeGo/client/entity"
+	"github.com/2mf8/LagrangeGo/client/entity"
 	"math"
 )
 

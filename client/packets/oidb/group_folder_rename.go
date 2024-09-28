@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
 )
 
 func BuildGroupFolderRenameReq(groupUin uint32, folderID string, newFolderName string) (*OidbPacket, error) {

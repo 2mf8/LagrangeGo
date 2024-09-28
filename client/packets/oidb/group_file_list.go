@@ -3,7 +3,7 @@ package oidb
 import (
 	"errors"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
 )
 
 func BuildGroupFileListReq(groupUin uint32, targetDirectory string, startIndex uint32, fileCount uint32) (*OidbPacket, error) {

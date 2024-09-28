@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils"
 
-	"github.com/LagrangeDev/LagrangeGo/client/auth"
+	"github.com/2mf8/LagrangeGo/client/auth"
 )
 
 type (

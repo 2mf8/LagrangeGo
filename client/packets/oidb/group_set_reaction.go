@@ -1,9 +1,9 @@
 package oidb
 
 import (
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 func BuildGroupSetReactionReq(groupUin, sequence uint32, code string, isAdd bool) (*OidbPacket, error) {

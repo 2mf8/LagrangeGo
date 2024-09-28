@@ -1,7 +1,7 @@
 package oidb
 
 import (
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
 )
 
 func BuildGroupSetSpecialTitleReq(groupUin uint32, uid, title string) (*OidbPacket, error) {

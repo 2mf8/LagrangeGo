@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 func BuildVideoDownloadReq(selfUid, videoUuid, videoName string, isGroup bool, md5, sha1 []byte) (*OidbPacket, error) {

@@ -6,15 +6,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/LagrangeDev/LagrangeGo/client/auth"
+	"github.com/2mf8/LagrangeGo/client/auth"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/tlv"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/wtlogin"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/wtlogin/loginState"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/wtlogin/qrcodeState"
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/client/packets/tlv"
+	"github.com/2mf8/LagrangeGo/client/packets/wtlogin"
+	"github.com/2mf8/LagrangeGo/client/packets/wtlogin/loginState"
+	"github.com/2mf8/LagrangeGo/client/packets/wtlogin/qrcodeState"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
 )
 
 func (c *QQClient) Login(password, qrcodePath string) error {

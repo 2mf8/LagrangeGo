@@ -5,7 +5,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/LagrangeDev/LagrangeGo/client/entity"
+	"github.com/2mf8/LagrangeGo/client/entity"
 	"github.com/RomiChan/syncx"
 )
 

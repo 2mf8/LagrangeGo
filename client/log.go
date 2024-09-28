@@ -5,7 +5,7 @@ package client
 import (
 	"fmt"
 
-	"github.com/LagrangeDev/LagrangeGo/utils/log"
+	"github.com/2mf8/LagrangeGo/utils/log"
 )
 
 func (c *QQClient) SetLogger(logger log.Logger) {

@@ -1,8 +1,8 @@
 package message
 
 import (
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/message"
+	"github.com/2mf8/LagrangeGo/internal/proto"
 )
 
 func BuildMultiMsgDownloadReq(uid string, resId string) ([]byte, error) {

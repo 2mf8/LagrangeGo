@@ -5,10 +5,10 @@ import (
 	"errors"
 	"math/rand"
 
-	"github.com/LagrangeDev/LagrangeGo/message"
+	"github.com/2mf8/LagrangeGo/message"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 func BuildPrivateImageUploadReq(targetUid string, image *message.ImageElement) (*OidbPacket, error) {

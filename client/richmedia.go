@@ -4,17 +4,17 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
 
-	highway2 "github.com/LagrangeDev/LagrangeGo/client/internal/highway"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/oidb"
-	message2 "github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/highway"
-	oidb2 "github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
-	"github.com/LagrangeDev/LagrangeGo/message"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
+	highway2 "github.com/2mf8/LagrangeGo/client/internal/highway"
+	"github.com/2mf8/LagrangeGo/client/packets/oidb"
+	message2 "github.com/2mf8/LagrangeGo/client/packets/pb/message"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/highway"
+	oidb2 "github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/internal/proto"
+	"github.com/2mf8/LagrangeGo/message"
+	"github.com/2mf8/LagrangeGo/utils/binary"
 )
 
 func oidbIPv4ToNTHighwayIPv4(ipv4s []*oidb2.IPv4) []*highway.NTHighwayIPv4 {

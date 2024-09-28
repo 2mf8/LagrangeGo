@@ -12,7 +12,7 @@ import (
 
 	ftea "github.com/fumiama/gofastTEA"
 
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 type Builder struct {

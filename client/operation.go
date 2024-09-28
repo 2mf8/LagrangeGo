@@ -8,15 +8,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/LagrangeDev/LagrangeGo/client/entity"
-	messagePkt "github.com/LagrangeDev/LagrangeGo/client/packets/message"
-	oidb2 "github.com/LagrangeDev/LagrangeGo/client/packets/oidb"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/message"
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
-	"github.com/LagrangeDev/LagrangeGo/internal/proto"
-	message2 "github.com/LagrangeDev/LagrangeGo/message"
-	"github.com/LagrangeDev/LagrangeGo/utils/binary"
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/client/entity"
+	messagePkt "github.com/2mf8/LagrangeGo/client/packets/message"
+	oidb2 "github.com/2mf8/LagrangeGo/client/packets/oidb"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/message"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/internal/proto"
+	message2 "github.com/2mf8/LagrangeGo/message"
+	"github.com/2mf8/LagrangeGo/utils/binary"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
 )
 
 // FetchFriends 获取好友列表信息，使用token可以获取下一页的群成员信息

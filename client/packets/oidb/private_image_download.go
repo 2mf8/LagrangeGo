@@ -3,7 +3,7 @@ package oidb
 import (
 	"fmt"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/pb/service/oidb"
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/oidb"
 )
 
 func BuildPrivateImageDownloadReq(selfUid string, node *oidb.IndexNode) (*OidbPacket, error) {

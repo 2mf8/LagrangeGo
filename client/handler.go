@@ -1,6 +1,6 @@
 package client
 
-import "github.com/LagrangeDev/LagrangeGo/client/internal/network"
+import "github.com/2mf8/LagrangeGo/client/internal/network"
 
 // handlerInfo from https://github.com/Mrs4s/MiraiGo/blob/54bdd873e3fed9fe1c944918924674dacec5ac76/client/client.go#L137
 type handlerInfo struct {

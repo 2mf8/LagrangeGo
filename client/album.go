@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/LagrangeDev/LagrangeGo/client/packets/album"
-	"github.com/LagrangeDev/LagrangeGo/utils"
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/client/packets/album"
+	"github.com/2mf8/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
 	"github.com/tidwall/gjson"
 )
 

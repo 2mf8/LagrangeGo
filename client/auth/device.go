@@ -6,10 +6,10 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/LagrangeDev/LagrangeGo/utils/crypto"
-	"github.com/LagrangeDev/LagrangeGo/utils/platform"
+	"github.com/2mf8/LagrangeGo/utils/crypto"
+	"github.com/2mf8/LagrangeGo/utils/platform"
 
-	"github.com/LagrangeDev/LagrangeGo/utils"
+	"github.com/2mf8/LagrangeGo/utils"
 )
 
 type DeviceInfo struct {
