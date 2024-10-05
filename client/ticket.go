@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/RomiChan/syncx"
@@ -29,7 +30,17 @@ type (
 )
 
 func (c *QQClient) SendRequestWithCookie(request *http.Request) (*http.Response, error) {
-	// 应该不需要考虑cookie的问题
+	u, err := url.Parse(request.URL.String())
+	if err != nil {
+		return nil, err
+	}
+	cookies, err := c.GetCookies(u.Hostname())
+	if err != nil {
+		return nil, err
+	}
+	request.AddCookie(&http.Cookie{Name: "skey", Value: cookies.SKey})
+	request.AddCookie(&http.Cookie{Name: "p_uin", Value: strconv.Itoa(int(cookies.uin))})
+	request.AddCookie(&http.Cookie{Name: "p_skey", Value: cookies.PsKey})
 	return c.ticket.client.Do(request)
 }
 
@@ -79,6 +90,8 @@ func (c *QQClient) GetCookies(domain string) (*Cookies, error) {
 	var token string
 	if tokenTime, ok := c.ticket.psKeys.Load(domain); ok {
 		if time.Now().Before(tokenTime.expireTime) {
+			token = tokenTime.key
+		} else {
 			cookies, err := c.FetchCookies([]string{domain})
 			if err != nil {
 				return nil, err
@@ -88,8 +101,6 @@ func (c *QQClient) GetCookies(domain string) (*Cookies, error) {
 				key:        token,
 				expireTime: time.Now().Add(24 * time.Hour),
 			})
-		} else {
-			token = tokenTime.key
 		}
 	} else {
 		cookies, err := c.FetchCookies([]string{domain})

@@ -1,12 +1,26 @@
 package client
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
+	"net/url"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/2mf8/LagrangeGo/client/packets/pb/service/highway"
+
+	"github.com/2mf8/LagrangeGo/client/packets/pb/action"
+
+	"golang.org/x/net/html"
 
 	"github.com/2mf8/LagrangeGo/client/entity"
 	messagePkt "github.com/2mf8/LagrangeGo/client/packets/message"
@@ -17,7 +31,29 @@ import (
 	message2 "github.com/2mf8/LagrangeGo/message"
 	"github.com/2mf8/LagrangeGo/utils/binary"
 	"github.com/2mf8/LagrangeGo/utils/crypto"
+	"github.com/tidwall/gjson"
 )
+
+func (c *QQClient) SetOnlineStatus(status, ext, battery uint32) error {
+	pkt, _ := proto.Marshal(&action.SetStatus{
+		Status:        status,
+		ExtStatus:     ext,
+		BatteryStatus: battery,
+	})
+	resp, err := c.sendUniPacketAndWait("trpc.qq_new_tech.status_svc.StatusService.SetStatus", pkt)
+	if err != nil {
+		return err
+	}
+	setstatusResp := action.SetStatusResponse{}
+	err = proto.Unmarshal(resp, &setstatusResp)
+	if err != nil {
+		return err
+	}
+	if setstatusResp.Message != "set status success" {
+		return fmt.Errorf("set status failed: %s", setstatusResp.Message)
+	}
+	return nil
+}
 
 // FetchFriends 获取好友列表信息，使用token可以获取下一页的群成员信息
 func (c *QQClient) FetchFriends(token uint32) ([]*entity.Friend, uint32, error) {
@@ -580,8 +616,8 @@ func (c *QQClient) FetchCookies(domains []string) ([]string, error) {
 }
 
 // UploadPrivateFile 上传私聊文件
-func (c *QQClient) UploadPrivateFile(targetUin uint32, localFilePath string) error {
-	fileElement, err := message2.NewLocalFile(localFilePath)
+func (c *QQClient) UploadPrivateFile(targetUin uint32, localFilePath, filename string) error {
+	fileElement, err := message2.NewLocalFile(localFilePath, filename)
 	if err != nil {
 		return err
 	}
@@ -605,8 +641,8 @@ func (c *QQClient) UploadPrivateFile(targetUin uint32, localFilePath string) err
 }
 
 // UploadGroupFile 上传群文件
-func (c *QQClient) UploadGroupFile(groupUin uint32, localFilePath string, targetDirectory string) error {
-	fileElement, err := message2.NewLocalFile(localFilePath)
+func (c *QQClient) UploadGroupFile(groupUin uint32, localFilePath, filename, targetDirectory string) error {
+	fileElement, err := message2.NewLocalFile(localFilePath, filename)
 	if err != nil {
 		return err
 	}
@@ -819,12 +855,12 @@ func (c *QQClient) FetchForwardMsg(resId string) (msg *message2.ForwardMessage, 
 	for idx, b := range result.Action.ActionData.MsgBody {
 		isGroupMsg := b.ResponseHead.Grp != nil
 		forwardMsg.Nodes[idx] = &message2.ForwardNode{
-			SenderId:   int64(b.ResponseHead.FromUin),
+			SenderId:   b.ResponseHead.FromUin,
 			SenderName: b.ResponseHead.Forward.FriendName.Unwrap(),
-			Time:       int32(b.ContentHead.TimeStamp.Unwrap()),
+			Time:       b.ContentHead.TimeStamp.Unwrap(),
 		}
 		if isGroupMsg {
-			forwardMsg.Nodes[idx].GroupId = int64(b.ResponseHead.Grp.GroupUin)
+			forwardMsg.Nodes[idx].GroupId = b.ResponseHead.Grp.GroupUin
 			grpMsg := message2.ParseGroupMessage(b)
 			c.PreprocessGroupMessageEvent(grpMsg)
 			forwardMsg.Nodes[idx].Message = grpMsg.Elements
@@ -839,22 +875,318 @@ func (c *QQClient) FetchForwardMsg(resId string) (msg *message2.ForwardMessage, 
 
 // UploadForwardMsg 上传合并转发消息
 // groupUin should be the group number where the uploader is located or 0 (c2c)
-func (c *QQClient) UploadForwardMsg(forwardNodes []*message2.ForwardNode, groupUin uint32) (resId string, err error) {
-	msgBody := c.BuildFakeMessage(forwardNodes)
+func (c *QQClient) UploadForwardMsg(forward *message2.ForwardMessage, groupUin uint32) (*message2.ForwardMessage, error) {
+	msgBody := c.BuildFakeMessage(forward.Nodes)
 	pkt, err := messagePkt.BuildMultiMsgUploadReq(c.GetUid(c.Uin), groupUin, msgBody)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	resp, err := c.sendUniPacketAndWait("trpc.group.long_msg_interface.MsgService.SsoSendLongMsg", pkt)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	pasted, err := messagePkt.ParseMultiMsgUploadResp(resp)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if pasted.Result == nil {
-		return "", errors.New("empty response data")
+		return nil, errors.New("empty response data")
 	}
-	return pasted.Result.ResId, nil
+	forward.ResID = pasted.Result.ResId
+	return forward, nil
+}
+
+// FetchEssenceMessage 获取精华消息
+func (c *QQClient) FetchEssenceMessage(groupUin uint32) ([]*message2.GroupEssenceMessage, error) {
+	var essenceMsg []*message2.GroupEssenceMessage
+	page := 0
+	bkn, err := c.GetCsrfToken()
+	if err != nil {
+		return essenceMsg, err
+	}
+	grpInfo := c.GetCachedGroupInfo(groupUin)
+	for {
+		reqUrl := fmt.Sprintf("https://qun.qq.com/cgi-bin/group_digest/digest_list?random=7800&X-CROSS-ORIGIN=fetch&group_code=%d&page_start=%d&page_limit=20&bkn=%d", groupUin, page, bkn)
+		req, err := http.NewRequest(http.MethodGet, reqUrl, nil)
+		if err != nil {
+			return essenceMsg, err
+		}
+		resp, err := c.SendRequestWithCookie(req)
+		if err != nil {
+			return essenceMsg, err
+		}
+		respData, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return essenceMsg, fmt.Errorf("error resp code %d", resp.StatusCode)
+		}
+		respJson := gjson.ParseBytes(respData)
+		if respJson.Get("retcode").Int() != 0 {
+			return essenceMsg, fmt.Errorf("error code %d, %s", respJson.Get("retcode").Int(), respJson.Get("retmsg").String())
+		}
+		for _, v := range respJson.Get("data").Get("msg_list").Array() {
+			var elements []message2.IMessageElement
+			for _, e := range v.Get("msg_content").Array() {
+				switch e.Get("msg_type").Int() {
+				case 1:
+					elements = append(elements, &message2.TextElement{Content: e.Get("text").String()})
+				case 2:
+					elements = append(elements, &message2.FaceElement{FaceID: uint16(e.Get("face_index").Int())})
+				case 3:
+					elements = append(elements, &message2.ImageElement{Url: e.Get("image_url").String()})
+				case 4:
+					elements = append(elements, &message2.FileElement{
+						FileId:  e.Get("file_id").String(),
+						FileUrl: e.Get("file_thumbnail_url").String(),
+					})
+				}
+			}
+			senderUin := uint32(v.Get("sender_uin").Int())
+			senderInfo := c.GetCachedMemberInfo(senderUin, groupUin)
+			essenceMsg = append(essenceMsg, &message2.GroupEssenceMessage{
+				OperatorUin:  uint32(v.Get("add_digest_uin").Int()),
+				OperatorUid:  c.GetUid(uint32(v.Get("add_digest_uin").Int())),
+				OperatorTime: uint64(v.Get("add_digest_time").Int()),
+				CanRemove:    v.Get("can_be_removed").Bool(),
+				Message: &message2.GroupMessage{
+					Id:         uint32(v.Get("msg_seq").Int()),
+					InternalId: uint32(v.Get("msg_random").Int()),
+					GroupUin:   grpInfo.GroupUin,
+					GroupName:  grpInfo.GroupName,
+					Sender: &message2.Sender{
+						Uin:      senderUin,
+						Uid:      c.GetUid(senderUin, groupUin),
+						Nickname: senderInfo.MemberName,
+						CardName: senderInfo.MemberCard,
+					},
+					Time:     uint32(v.Get("sender_time").Int()),
+					Elements: elements,
+				},
+			})
+		}
+		if respJson.Get("data").Get("is_end").Bool() {
+			break
+		}
+	}
+	return essenceMsg, nil
+}
+
+// GetGroupHonorInfo 获取群荣誉信息
+// reference https://github.com/Mrs4s/MiraiGo/blob/master/client/http_api.go
+func (c *QQClient) GetGroupHonorInfo(groupUin uint32, honorType entity.HonorType) (*entity.GroupHonorInfo, error) {
+	ret := &entity.GroupHonorInfo{}
+	honorRe := regexp.MustCompile(`window\.__INITIAL_STATE__\s*?=\s*?(\{.*})`)
+	reqUrl := fmt.Sprintf("https://qun.qq.com/interactive/honorlist?gc=%d&type=%d", groupUin, honorType)
+	req, err := http.NewRequest(http.MethodGet, reqUrl, nil)
+	if err != nil {
+		return ret, err
+	}
+	resp, err := c.SendRequestWithCookie(req)
+	if err != nil {
+		return ret, err
+	}
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ret, fmt.Errorf("error resp code %d", resp.StatusCode)
+	}
+	matched := honorRe.FindSubmatch(respData)
+	if len(matched) == 0 {
+		return nil, errors.New("no matched data")
+	}
+	err = json.NewDecoder(bytes.NewReader(matched[1])).Decode(&ret)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+// GetGroupNotice 获取群公告
+func (c *QQClient) GetGroupNotice(groupUin uint32) (l []*entity.GroupNoticeFeed, err error) {
+	bkn, err := c.GetCsrfToken()
+	if err != nil {
+		return nil, err
+	}
+	v := url.Values{}
+	v.Set("bkn", strconv.Itoa(bkn))
+	v.Set("qid", strconv.FormatInt(int64(groupUin), 10))
+	v.Set("ft", "23")
+	v.Set("ni", "1")
+	v.Set("n", "1")
+	v.Set("i", "1")
+	v.Set("log_read", "1")
+	v.Set("platform", "1")
+	v.Set("s", "-1")
+	v.Set("n", "20")
+	req, _ := http.NewRequest(http.MethodGet, "https://web.qun.qq.com/cgi-bin/announce/get_t_list?"+v.Encode(), nil)
+	resp, err := c.SendRequestWithCookie(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error resp code %d", resp.StatusCode)
+	}
+	r := entity.GroupNoticeRsp{}
+	if err = json.NewDecoder(resp.Body).Decode(&r); err != nil {
+		return
+	}
+	_ = resp.Body.Close()
+	o := make([]*entity.GroupNoticeFeed, 0, len(r.Feeds)+len(r.Inst))
+	o = append(o, r.Feeds...)
+	o = append(o, r.Inst...)
+	return o, nil
+}
+
+func (c *QQClient) uploadGroupNoticePic(bkn int, img []byte) (*entity.NoticeImage, error) {
+	ret := &entity.NoticeImage{}
+	buf := new(bytes.Buffer)
+	w := multipart.NewWriter(buf)
+	_ = w.WriteField("bkn", strconv.Itoa(bkn))
+	_ = w.WriteField("source", "troopNotice")
+	_ = w.WriteField("m", "0")
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", `form-data; name="pic_up"; filename="temp_uploadFile.png"`)
+	h.Set("Content-Type", "image/png")
+	fw, _ := w.CreatePart(h)
+	_, _ = fw.Write(img)
+	_ = w.Close()
+	req, err := http.NewRequest(http.MethodPost, "https://web.qun.qq.com/cgi-bin/announce/upload_img", buf)
+	if err != nil {
+		return ret, err
+	}
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	resp, err := c.SendRequestWithCookie(req)
+	if err != nil {
+		return ret, err
+	}
+	var res entity.NoticePicUpResponse
+	err = json.NewDecoder(resp.Body).Decode(&res)
+	if err != nil {
+		return ret, err
+	}
+	_ = resp.Body.Close()
+	if res.ErrorCode != 0 {
+		return ret, errors.New(res.ErrorMessage)
+	}
+	err = json.Unmarshal([]byte(html.UnescapeString(res.ID)), &ret)
+	if err != nil {
+		return ret, err
+	}
+	return ret, nil
+}
+
+// AddGroupNoticeSimple 发群公告
+func (c *QQClient) AddGroupNoticeSimple(groupUin uint32, text string) (noticeId string, err error) {
+	bkn, err := c.GetCsrfToken()
+	if err != nil {
+		return "", err
+	}
+	body := fmt.Sprintf(`qid=%v&bkn=%v&text=%v&pinned=0&type=1&settings={"is_show_edit_card":0,"tip_window_type":1,"confirm_required":1}`, groupUin, bkn, url.QueryEscape(text))
+	req, err := http.NewRequest(http.MethodPost, "https://web.qun.qq.com/cgi-bin/announce/add_qun_notice?bkn="+strconv.Itoa(bkn), strings.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.SendRequestWithCookie(req)
+	if err != nil {
+		return "", err
+	}
+	var res entity.NoticeSendResp
+	err = json.NewDecoder(resp.Body).Decode(&res)
+	if err != nil {
+		return "", err
+	}
+	_ = resp.Body.Close()
+	return res.NoticeId, nil
+}
+
+// AddGroupNoticeWithPic 发群公告带图片
+func (c *QQClient) AddGroupNoticeWithPic(groupUin uint32, text string, pic []byte) (noticeId string, err error) {
+	bkn, err := c.GetCsrfToken()
+	if err != nil {
+		return "", err
+	}
+	img, err := c.uploadGroupNoticePic(bkn, pic)
+	if err != nil {
+		return "", err
+	}
+	body := fmt.Sprintf(`qid=%v&bkn=%v&text=%v&pinned=0&type=1&settings={"is_show_edit_card":0,"tip_window_type":1,"confirm_required":1}&pic=%v&imgWidth=%v&imgHeight=%v`, groupUin, bkn, url.QueryEscape(text), img.ID, img.Width, img.Height)
+	req, err := http.NewRequest(http.MethodPost, "https://web.qun.qq.com/cgi-bin/announce/add_qun_notice?bkn="+strconv.Itoa(bkn), strings.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.SendRequestWithCookie(req)
+	if err != nil {
+		return "", err
+	}
+	var res entity.NoticeSendResp
+	err = json.NewDecoder(resp.Body).Decode(&res)
+	if err != nil {
+		return "", err
+	}
+	_ = resp.Body.Close()
+	return res.NoticeId, nil
+}
+
+// DelGroupNotice 删除群公告
+func (c *QQClient) DelGroupNotice(groupUin uint32, fid string) error {
+	bkn, err := c.GetCsrfToken()
+	if err != nil {
+		return err
+	}
+	body := fmt.Sprintf(`fid=%s&qid=%v&bkn=%v&ft=23&op=1`, fid, groupUin, bkn)
+	req, err := http.NewRequest(http.MethodPost, "https://web.qun.qq.com/cgi-bin/announce/del_feed", strings.NewReader(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.SendRequestWithCookie(req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetAvatar 设置头像
+func (c *QQClient) SetAvatar(avatar io.ReadSeeker) error {
+	if avatar == nil {
+		return errors.New("avatar is nil")
+	}
+	md5, size := crypto.ComputeMd5AndLength(avatar)
+	return c.highwayUpload(90, avatar, uint64(size), md5, nil)
+}
+
+func (c *QQClient) SetGroupAvatar(groupUin uint32, avatar io.ReadSeeker) error {
+	if avatar == nil {
+		return errors.New("avatar is nil")
+	}
+	extra := highway.GroupAvatarExtra{
+		Type:     101,
+		GroupUin: groupUin,
+		Field3:   &highway.GroupAvatarExtraField3{Field1: 1},
+		Field5:   3,
+		Field6:   1,
+	}
+	extStream, err := proto.Marshal(&extra)
+	if err != nil {
+		return err
+	}
+	md5, size := crypto.ComputeMd5AndLength(avatar)
+	return c.highwayUpload(3000, avatar, uint64(size), md5, extStream)
+}
+
+func (c *QQClient) SetEssenceMessage(groupUin, seq, random uint32, isSet bool) error {
+	pkt, err := oidb2.BuildSetEssenceMessageReq(groupUin, seq, random, isSet)
+	if err != nil {
+		return err
+	}
+	resp, err := c.sendOidbPacketAndWait(pkt)
+	if err != nil {
+		return err
+	}
+	return oidb2.ParseSetEssenceMessageResp(resp)
 }

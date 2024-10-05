@@ -78,7 +78,7 @@ type (
 
 		// EffectID show pic effect id.
 		EffectID int32 // deprecated
-		Flash    bool  // deprecated
+		Flash    bool
 
 		// send & receive
 		Summary string
@@ -313,12 +313,16 @@ func NewStreamFile(r io.ReadSeeker, fileName string) *FileElement {
 	}
 }
 
-func NewLocalFile(path string) (*FileElement, error) {
+func NewLocalFile(path string, name ...string) (*FileElement, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	return NewStreamFile(file, filepath.Base(file.Name())), nil
+	return NewStreamFile(file, utils.LazyTernary(len(name) == 0, func() string {
+		return filepath.Base(file.Name())
+	}, func() string {
+		return name[0]
+	})), nil
 }
 
 func NewLightApp(content string) *LightAppElement {
@@ -328,13 +332,20 @@ func NewLightApp(content string) *LightAppElement {
 	}
 }
 
-func NewForward(resid string) *ForwardMessage {
+func NewForward(resid string, nodes []*ForwardNode) *ForwardMessage {
+	return &ForwardMessage{
+		ResID: resid,
+		Nodes: nodes,
+	}
+}
+
+func NewForwardWithResID(resid string) *ForwardMessage {
 	return &ForwardMessage{
 		ResID: resid,
 	}
 }
 
-func NewNodeForward(nodes []*ForwardNode) *ForwardMessage {
+func NewForwardWithNodes(nodes []*ForwardNode) *ForwardMessage {
 	return &ForwardMessage{
 		Nodes: nodes,
 	}
