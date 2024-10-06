@@ -170,11 +170,11 @@ func (e *ForwardMessage) BuildElement() []*message.Elem {
 		isContainSelf := false
 		isCount := 0
 		for _, v := range e.Nodes {
-			isCount++
 			if v.SenderId == e.SelfId && e.SelfId > 0 {
 				isContainSelf = true
 			}
 			if _, ok := isSenderNameExist[v.SenderName]; !ok {
+				isCount++
 				isSenderNameExist[v.SenderName] = true
 				if metaSource == "" {
 					metaSource = v.SenderName
